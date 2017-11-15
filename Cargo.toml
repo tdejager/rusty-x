@@ -1,0 +1,16 @@
+[package]
+name = "x"
+version = "0.1.0"
+authors = ["Tim de Jager <tdejager89@gmail.com>"]
+include = ["src/*.rs", "src/bin/*.rs"]
+
+[dependencies]
+clap = "~2.19.0"
+
+[lib]
+path = "src/lib.rs"
+
+
+[[bin]]
+name = "rusty-x"
+path = "src/bin/main.rs"
