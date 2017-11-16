@@ -10,8 +10,8 @@ struct Snippet {
 
 impl Snippet {
 
-    pub fn new(std:fs:) {
-        
+    pub fn new(name: String, tags: Vec<String>) {
+        Snippet{name, tags}
     }
 
 }
