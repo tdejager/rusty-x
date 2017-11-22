@@ -3,7 +3,7 @@ extern crate clap;
 use clap::{Arg, App, SubCommand};
 
 extern crate x;
-use x::{start_operation, OpCode};
+use x::{start_operation, Error, OpCode};
 
 fn main() {
     let matches = App::new("Rusty X")
@@ -21,5 +21,9 @@ fn main() {
 
     // Pass keywords or options
     let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
-    start_operation(OpCode::ListSnippets, keywords);
+    let res = start_operation(OpCode::ListSnippets, keywords);
+    if let Err(err) = res {
+        println!("{:?}", err);
+    }
+    
 }
