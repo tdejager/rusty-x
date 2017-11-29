@@ -12,7 +12,7 @@ pub enum Error {
 impl fmt::Display for Error {  
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::FileError(_) => f.write_str("FileError"),
+            Error::FileError(ref e) => write!(f, "FileError: {}", e),
             Error::InternalError => f.write_str("InternalServerError"),
         }
     }

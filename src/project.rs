@@ -9,8 +9,11 @@ impl Project {
 
 
     /// Get the default project location
-    pub fn default_project() -> Project{
-        let home = env::home_dir();
-        Project{folder_name: String::from("~/.snippets"), ext: String::from(".md")}
+    pub fn default_project() -> Project {
+        let home = String::from(env::home_dir()
+                                .expect("Cannot find the home dir")
+                                .to_str().unwrap());
+
+        Project{folder_name: String::from(home + "/.snippets"), ext: String::from("md")}
     }
 }

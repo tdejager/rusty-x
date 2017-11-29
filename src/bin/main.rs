@@ -4,6 +4,9 @@ use clap::{Arg, App, SubCommand};
 extern crate x;
 use x::{start_operation, Error, OpCode};
 
+use std::io;
+use std::process;
+
 fn main() {
     let matches = App::new("Rusty X")
                           .version("0.1")
@@ -22,7 +25,8 @@ fn main() {
     let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
     let res = start_operation(OpCode::ListSnippets, keywords);
     if let Err(err) = res {
-        println!("{:?}", err);
+        eprintln!("Error: {}", err);
+        process::exit(1);
     }
     
 }
