@@ -10,8 +10,8 @@ pub struct Snippet {
 
 impl Snippet {
 
-    pub fn new() {
-        
+    pub fn new(name: String, tags: Vec<String>) -> Snippet {
+        Snippet{name, tags}
     }
 
 }
