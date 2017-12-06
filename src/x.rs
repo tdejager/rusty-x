@@ -47,9 +47,10 @@ pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, er
 }
 
 /// Load snippets from the dir entries
-pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>) -> Result<Vec<snippet::Snippet>, error::Error>
+pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -> Result<Vec<snippet::Snippet>, error::Error>
 {
     let mut result : Vec<snippet::Snippet> = Vec::new();
+    let keyword_slice = keywords.as_slice();
 
     // Return snippets
     for entry in dir_entries {
@@ -57,16 +58,21 @@ pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>) -> Result<Vec<snippet::Sn
         let filename = entry.file_name();
         // Read the tags
         let tags = snippet::read_tags(entry.path().to_str().unwrap())?;
-        result.push(snippet::Snippet::new(filename.to_str().unwrap().into(), &tags));
+        
+        // If tag is in the snippet, or no tags are given
+        if keyword_slice.len() == 0 || tags.iter().fold(false, | res, tag| (res || keyword_slice.contains(&tag))) {
+            result.push(snippet::Snippet::new(filename.to_str().unwrap().into(), &tags));
+        }
     }
     Ok(result)
 }
 
 //// Start the different operation modes
-pub fn start_operation(code: OpCode, options: Vec<String>) -> Result<(), error::Error>{
+pub fn start_operation(code: OpCode, keywords: Vec<String>) -> Result<(), error::Error>{
     let project = project::Project::default_project();
     // Match on operation
     let result = match code {
+        
         OpCode::AddSnippet => { 
             println!("Add a snippet");
             Ok(())
@@ -74,15 +80,16 @@ pub fn start_operation(code: OpCode, options: Vec<String>) -> Result<(), error::
 
         OpCode::ListSnippets => {
              let files = find_snippets(&project)?;
-             let snippets = load_snippets(&files)?;
+             let snippets = load_snippets(&files , &keywords)?;
 
              println!("{}", snippets.len());
              for snip in snippets {
-                 //let path : path::PathBuf =snip.iter().map(|dir_ent| dir_ent.path()).collect();
+                 //let path : path::PathBuf = snip.iter().map(|dir_ent| dir_ent.path()).collect();
                  println!("{:?}", snip);
              }
              Ok(())
         },
+
         OpCode::SyncSnippets => {
             println!("Sync all snippets");
             Ok(())

@@ -24,6 +24,7 @@ fn main() {
     // Pass keywords or options
     let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
     let res = start_operation(OpCode::ListSnippets, keywords);
+
     if let Err(err) = res {
         eprintln!("Error: {}", err);
         process::exit(1);
