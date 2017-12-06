@@ -71,7 +71,7 @@ pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -
 pub fn start_operation(code: OpCode, keywords: Vec<String>) -> Result<(), error::Error>{
     let project = project::Project::default_project();
     // Match on operation
-    let result = match code {
+    match code {
         
         OpCode::AddSnippet => { 
             println!("Add a snippet");
@@ -94,8 +94,6 @@ pub fn start_operation(code: OpCode, keywords: Vec<String>) -> Result<(), error:
             println!("Sync all snippets");
             Ok(())
         }
-    };
-
-    result
+    }
 }
 

@@ -12,18 +12,37 @@ fn main() {
                           .version("0.1")
                           .author("Tim de Jager <tdejager89@gmail.com>")
                           .about("Rusty snippet manager")
-                          .arg(Arg::with_name("add")
-                               .short("a")
-                               .long("add")
-                               .help("Opens the editor to add a file"))
-                          .arg(Arg::with_name("KEYWORDS")
+                          .arg(Arg::with_name("tags")
                                .help("Keywords to search for")
-                               .required(true)
-                               .multiple(true)).get_matches();
+                               .required(false)
+                               .multiple(true))
+                          .subcommand(SubCommand::with_name("add")
+                               .about("Add a file")
+                               .args_from_usage(
+                               "<name> 'Name of the snippet'
+                                [tags]... 'Tags to add'
+                               "))
+                         .get_matches();
 
-    // Pass keywords or options
-    let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
-    let res = start_operation(OpCode::ListSnippets, keywords);
+
+    let res = if let Some(add) = matches.subcommand_matches("add") {
+        // Parse for tags
+        let tags: Vec<String> = match add.values_of("tags") {
+            Some(ts) => ts.map(|s| s.to_string()).collect(),
+            None => Vec::new()
+        };
+        println!("Tags : {:?}", tags);
+       // Add a snippet
+       start_operation(OpCode::AddSnippet, tags)
+    } else {
+        // Parse for tags
+        let tags: Vec<String> = match matches.values_of("tags") {
+            Some(ts) => ts.map(|s| s.to_string()).collect(),
+            None => Vec::new()
+        };
+        // List a snippet
+        start_operation(OpCode::ListSnippets, tags)
+    };
 
     if let Err(err) = res {
         eprintln!("Error: {}", err);
