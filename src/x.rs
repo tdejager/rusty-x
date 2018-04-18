@@ -78,8 +78,8 @@ pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &
 
     // Match on operation
     let result = match code {
-        // Add a snippet
-        OpCode::AddSnippet => {
+
+        OpCode::AddSnippet => { 
             println!("Add a snippet");
             let output = Command::new("vim").spawn().expect("Vim does not start").wait_with_output()?;
             Ok(())
@@ -108,8 +108,6 @@ pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &
             println!("Sync all snippets");
             Ok(())
         }
-    };
-
-    result
+    }
 }
 
