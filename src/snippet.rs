@@ -8,8 +8,8 @@ use error;
  */
 #[derive(Debug)]
 pub struct Snippet {
-    name: String,
-    tags: Vec<String>
+    pub name: String,
+    pub tags: Vec<String>
 }
 
 impl Snippet {
@@ -22,6 +22,7 @@ impl Snippet {
 
 pub fn read_tags(path: &str) -> Result<Vec<String>, error::Error>
 {
+    // Open the file
     let f = File::open(path)?;
     let mut file = BufReader::new(f);
 
@@ -34,6 +35,7 @@ pub fn read_tags(path: &str) -> Result<Vec<String>, error::Error>
     let tags : Vec<String>  = t.iter()
         .map(|s| String::from(s.to_owned())).collect();
 
+    // Return the tags found
     Ok(tags)
 }
 

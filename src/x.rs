@@ -4,6 +4,9 @@ use error;
 
 use std::fs;
 use std::path;
+use std::fs::File;
+use std::io::Read;
+use std::process::Command;
 
 
 #[derive(Debug)]
@@ -26,6 +29,7 @@ pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, er
 
     // Read the entries in the folder
     let entries = fs::read_dir(&project.folder_name)?;
+
     // For each of the entries
     for e in entries {
         let dir_ent = e?;
@@ -68,28 +72,38 @@ pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -
 }
 
 //// Start the different operation modes
-pub fn start_operation(code: OpCode, keywords: Vec<String>) -> Result<(), error::Error>{
+pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &str) -> Result<(), error::Error>{
     let project = project::Project::default_project();
+    println!("Opcode {:?}", code);
+
     // Match on operation
     let result = match code {
-        
-        OpCode::AddSnippet => { 
+        // Add a snippet
+        OpCode::AddSnippet => {
             println!("Add a snippet");
+            let output = Command::new("vim").spawn().expect("Vim does not start").wait_with_output()?;
             Ok(())
         }
 
+        // List snippets
         OpCode::ListSnippets => {
+            println!("List snippets");
              let files = find_snippets(&project)?;
              let snippets = load_snippets(&files , &keywords)?;
 
-             println!("{}", snippets.len());
              for snip in snippets {
-                 //let path : path::PathBuf = snip.iter().map(|dir_ent| dir_ent.path()).collect();
-                 println!("{:?}", snip);
+                 println!("{:?}", snip.name);
+                 let full_path = path::Path::new(&project.folder_name).join(snip.name);
+                 let mut file = File::open(full_path)?;
+
+                 let mut contents = String::new();
+                 file.read_to_string(&mut contents)?;
+                 println!("{:?}", contents);
              }
              Ok(())
         },
 
+        // Sync snippets
         OpCode::SyncSnippets => {
             println!("Sync all snippets");
             Ok(())
