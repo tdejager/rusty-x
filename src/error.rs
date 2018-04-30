@@ -5,7 +5,7 @@ use std::io;
 #[derive(Debug)]
 pub enum Error {
     FileError(io::Error),
-    InternalError
+    InternalError(String)
 }
 
 /// Implement display for error type
@@ -13,7 +13,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::FileError(ref e) => write!(f, "FileError: {}", e),
-            Error::InternalError => f.write_str("InternalServerError"),
+            Error::InternalError(ref s) => write!(f, "Internal error: {}", s),
         }
     }
 }
@@ -23,7 +23,7 @@ impl StdError for Error {
     fn description(&self) -> &str {
         match *self {
             Error::FileError(ref e) => e.description(),
-            Error::InternalError => "Internal processing error",
+            Error::InternalError(ref s) => "Internal processing error",
         }
     }
 }

@@ -1,11 +1,13 @@
 use project;
 use snippet;
-use error;
+use error::Error;
+use error::Error::{InternalError};
 
 use std::fs;
 use std::path;
 use std::fs::File;
 use std::io::Read;
+use std::io::Write;
 use std::process::Command;
 
 
@@ -21,7 +23,7 @@ pub enum OpCode {
 
 
 /// Find the snippets associated with the project
-pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, error::Error> {
+pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, Error> {
     println!("Finding snippets in {},", &project.folder_name.as_str());
 
     // Crawl through directory that is set as project root
@@ -51,7 +53,7 @@ pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, er
 }
 
 /// Load snippets from the dir entries
-pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -> Result<Vec<snippet::Snippet>, error::Error>
+pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -> Result<Vec<snippet::Snippet>, Error>
 {
     let mut result : Vec<snippet::Snippet> = Vec::new();
     let keyword_slice = keywords.as_slice();
@@ -72,16 +74,31 @@ pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -
 }
 
 //// Start the different operation modes
-pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &str) -> Result<(), error::Error>{
+pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &str) -> Result<(), Error>{
     let project = project::Project::default_project();
     println!("Opcode {:?}", code);
 
     // Match on operation
     let result = match code {
 
-        OpCode::AddSnippet => { 
-            println!("Add a snippet");
-            let output = Command::new("vim").spawn().expect("Vim does not start").wait_with_output()?;
+        OpCode::AddSnippet => {
+            // Create the full path
+            let full_path = path::Path::new(&project.folder_name).join(optional_filename);
+            // Create the file
+            if full_path.exists() {
+                return Err(InternalError("Snippet already exists".to_string()))
+            }
+            let mut file = File::create(&full_path)?;
+
+            // Write the keywords to the file
+            for keyword in keywords {
+                file.write(keyword.as_bytes())?;
+                file.write(b",")?;
+            }
+            file.write(b"\n==============\n")?;
+            // Open vim on location
+            let _output = Command::new("vim").
+                arg(full_path).spawn()?.wait_with_output()?;
             Ok(())
         }
 
@@ -108,6 +125,7 @@ pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &
             println!("Sync all snippets");
             Ok(())
         }
-    }
+    };
+    result
 }
 
