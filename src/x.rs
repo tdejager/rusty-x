@@ -109,13 +109,13 @@ pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &
              let snippets = load_snippets(&files , &keywords)?;
 
              for snip in snippets {
-                 println!("{:?}", snip.name);
                  let full_path = path::Path::new(&project.folder_name).join(snip.name);
-                 let mut file = File::open(full_path)?;
+                 Command::new("mdcat").arg(full_path).spawn()?.wait_with_output();
+                 /* let mut file = File::open(full_path)?;
 
                  let mut contents = String::new();
                  file.read_to_string(&mut contents)?;
-                 println!("{:?}", contents);
+                 println!("{:?}", contents); */
              }
              Ok(())
         },
