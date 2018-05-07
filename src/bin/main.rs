@@ -7,6 +7,12 @@ use x::{start_operation, Error, OpCode};
 use std::io;
 use std::process;
 
+use std::fs;
+use std::path;
+use std::fs::File;
+use std::io::Read;
+use std::io::Write;
+
 fn main() {
     let matches = App::new("Rusty X")
                           .version("0.1")
@@ -36,9 +42,24 @@ fn main() {
     let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
     let res = start_operation(op_code, keywords, filename);
 
-    if let Err(err) = res {
-        eprintln!("Error: {}", err);
-        process::exit(1);
+    let project = project::Project::default_project();
+    match res {
+        Err(err) =>
+             {
+                 eprintln!("Error: {}", err);
+                 process::exit(1);
+             }
+        Ok(snippets) =>
+            {
+                for snip in &snippets {
+                    let full_path = path::Path::new(&project.folder_name).join(snip.name.to_owned());
+                    let mut file = File::open(full_path).unwrap();
+
+                    let mut contents = String::new();
+                    file.read_to_string(&mut contents).unwrap();
+                    println!("{:?}", contents);
+                }
+            }
     }
     
 }

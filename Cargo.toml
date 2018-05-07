@@ -6,6 +6,8 @@ include = ["src/*.rs", "src/bin/*.rs"]
 
 [dependencies]
 clap = "~2.19.0"
+colored = "1.6"
+markdown = "0.2"
 
 [lib]
 path = "src/lib.rs"

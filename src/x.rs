@@ -3,13 +3,13 @@ use snippet;
 use error::Error;
 use error::Error::{InternalError};
 
+use std::process::Command;
+
 use std::fs;
 use std::path;
 use std::fs::File;
 use std::io::Read;
 use std::io::Write;
-use std::process::Command;
-
 
 #[derive(Debug)]
 pub enum OpCode {
@@ -74,7 +74,7 @@ pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -
 }
 
 //// Start the different operation modes
-pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &str) -> Result<(), Error>{
+pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &str) -> Result<Vec<snippet::Snippet>, Error>{
     let project = project::Project::default_project();
     println!("Opcode {:?}", code);
 
@@ -91,7 +91,7 @@ pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &
             let mut file = File::create(&full_path)?;
 
             // Write the keywords to the file
-            for keyword in keywords {
+            for keyword in &keywords {
                 file.write(keyword.as_bytes())?;
                 file.write(b",")?;
             }
@@ -99,7 +99,9 @@ pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &
             // Open vim on location
             let _output = Command::new("vim").
                 arg(full_path).spawn()?.wait_with_output()?;
-            Ok(())
+
+            let snippet = snippet::Snippet::new(String::from(optional_filename), &keywords);
+            Ok(vec![snippet])
         }
 
         // List snippets
@@ -108,22 +110,13 @@ pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &
              let files = find_snippets(&project)?;
              let snippets = load_snippets(&files , &keywords)?;
 
-             for snip in snippets {
-                 let full_path = path::Path::new(&project.folder_name).join(snip.name);
-                 Command::new("mdcat").arg(full_path).spawn()?.wait_with_output();
-                 /* let mut file = File::open(full_path)?;
-
-                 let mut contents = String::new();
-                 file.read_to_string(&mut contents)?;
-                 println!("{:?}", contents); */
-             }
-             Ok(())
+             Ok(snippets)
         },
 
         // Sync snippets
         OpCode::SyncSnippets => {
             println!("Sync all snippets");
-            Ok(())
+            Ok(vec![])
         }
     };
     result
