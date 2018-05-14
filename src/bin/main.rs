@@ -2,7 +2,7 @@ extern crate clap;
 use clap::{Arg, App, SubCommand};
 
 extern crate x;
-use x::{start_operation, Error, OpCode};
+use x::{start_operation, Error, OpCode, Project};
 
 use std::io;
 use std::process;
@@ -13,7 +13,7 @@ use std::fs::File;
 use std::io::Read;
 use std::io::Write;
 
-fn main() {
+fn main() -> Result<(), Error> {
     let matches = App::new("Rusty X")
                           .version("0.1")
                           .author("Tim de Jager <tdejager89@gmail.com>")
@@ -42,12 +42,11 @@ fn main() {
     let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
     let res = start_operation(op_code, keywords, filename);
 
-    let project = project::Project::default_project();
+    let project = Project::default_project();
     match res {
         Err(err) =>
              {
-                 eprintln!("Error: {}", err);
-                 process::exit(1);
+                 Err(err)
              }
         Ok(snippets) =>
             {
@@ -59,6 +58,7 @@ fn main() {
                     file.read_to_string(&mut contents).unwrap();
                     println!("{:?}", contents);
                 }
+                Ok(())
             }
     }
     
