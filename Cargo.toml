@@ -8,6 +8,7 @@ include = ["src/*.rs", "src/bin/*.rs"]
 clap = "~2.19.0"
 colored = "1.6"
 markdown = "0.2"
+syntect = "1.8"
 
 [lib]
 path = "src/lib.rs"
