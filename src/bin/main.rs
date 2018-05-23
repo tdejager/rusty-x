@@ -52,10 +52,8 @@ fn main() -> Result<(), Error> {
             {
                 for snip in &snippets {
                     let full_path = path::Path::new(&project.folder_name).join(snip.name.to_owned());
-                    let mut file = File::open(full_path).unwrap();
 
-                    let mut contents = String::new();
-                    file.read_to_string(&mut contents).unwrap();
+                    let mut contents = fs::read_to_string(&full_path)?;
                     println!("{:?}", contents);
                 }
                 Ok(())
