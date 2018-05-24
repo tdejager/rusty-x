@@ -12,3 +12,4 @@ Cargo.lock
 tags
 
 *.swp
+*.idea
