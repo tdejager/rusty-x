@@ -23,7 +23,7 @@ impl StdError for Error {
     fn description(&self) -> &str {
         match *self {
             Error::FileError(ref e) => e.description(),
-            Error::InternalError(ref s) => "Internal processing error",
+            Error::InternalError(ref _s) => "Internal processing error",
         }
     }
 }

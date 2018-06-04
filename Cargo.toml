@@ -9,6 +9,7 @@ clap = "~2.19.0"
 colored = "1.6"
 markdown = "0.2"
 syntect = "1.8"
+toml = "0.4"
 
 [lib]
 path = "src/lib.rs"

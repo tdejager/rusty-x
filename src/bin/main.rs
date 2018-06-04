@@ -4,7 +4,7 @@ use clap::{Arg, App, SubCommand};
 
 extern crate x;
 
-use x::{start_operation, Error, OpCode, Project};
+use x::{start_operation, Error, OpCode, Project, ProjectOperation};
 
 use std::io;
 use std::process;
@@ -68,11 +68,20 @@ fn main() -> Result<(), Error> {
         (OpCode::ListSnippets, "")
     };
 
+
+    let project = Project::default_project()?;
+
+    // Create a new project file if it does not exist
+    match poject {
+        ProjectOperation::NotExist(project) =>
+            { project.write() },
+        _ => {}
+    }
+
     // Pass keywords or options
     let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
     let res = start_operation(op_code, keywords, filename);
 
-    let project = Project::default_project();
     match res {
         Err(err) =>
             {
