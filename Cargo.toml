@@ -10,6 +10,8 @@ colored = "1.6"
 markdown = "0.2"
 syntect = "1.8"
 toml = "0.4"
+serde_derive = "1.0.66"
+serde = "1.0.66"
 
 [lib]
 path = "src/lib.rs"

@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate serde_derive;
 
 mod x;
 pub use x::{OpCode, start_operation};

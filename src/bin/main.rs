@@ -15,6 +15,7 @@ use std::fs::File;
 use std::io::Read;
 use std::io::Write;
 use std::io::BufRead;
+use std::env;
 
 extern crate syntect;
 
@@ -69,18 +70,24 @@ fn main() -> Result<(), Error> {
     };
 
 
-    let project = Project::default_project()?;
+    let project_operation = Project::default_project()?;
 
     // Create a new project file if it does not exist
-    match poject {
+    let project = match project_operation {
         ProjectOperation::NotExist(project) =>
-            { project.write() },
-        _ => {}
-    }
+            {
+                let home = String::from(env::home_dir()
+                    .expect("Cannot find the home dir")
+                    .to_str().unwrap());
+                project.write(home.as_ref())?;
+                project
+            },
+        ProjectOperation::Exist(project) => { project }
+    };
 
     // Pass keywords or options
     let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
-    let res = start_operation(op_code, keywords, filename);
+    let res = start_operation(op_code, &project, keywords, filename);
 
     match res {
         Err(err) =>
@@ -90,7 +97,7 @@ fn main() -> Result<(), Error> {
         Ok(snippets) =>
             {
                 for snip in &snippets {
-                    let full_path = path::Path::new(&project.folder_name).join(snip.name.to_owned());
+                    let full_path = path::Path::new(&snip.name).join(snip.name.to_owned());
                     display_snippet(&full_path);
                     //let mut contents = fs::read_to_string(&full_path)?;
                     //println!("{:?}", contents);

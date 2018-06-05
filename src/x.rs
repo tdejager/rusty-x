@@ -24,27 +24,29 @@ pub enum OpCode {
 
 /// Find the snippets associated with the project
 pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, Error> {
-    println!("Finding snippets in {},", &project.folder_name.as_str());
 
     // Crawl through directory that is set as project root
     let mut res : Vec<fs::DirEntry> = Vec::new();
 
     // Read the entries in the folder
-    let entries = fs::read_dir(&project.folder_name)?;
+    for snippet_location in project.locations.iter() {
+        println!("Finding snippets in {},", &snippet_location.local.as_str());
+        let entries = fs::read_dir(&snippet_location.local)?;
 
-    // For each of the entries
-    for e in entries {
-        let dir_ent = e?;
+        // For each of the entries
+        for e in entries {
+            let dir_ent = e?;
 
-        // Get the path
-        let path = dir_ent.path();
-        // Get the extension
-        let ext_opt = path.extension();
-        if let Some(ext) = ext_opt {
-            if let Some(s) = ext.to_str(){
-                // Add to list if files match extension
-                if s == project.ext {
-                    res.push(dir_ent);
+            // Get the path
+            let path = dir_ent.path();
+            // Get the extension
+            let ext_opt = path.extension();
+            if let Some(ext) = ext_opt {
+                if let Some(s) = ext.to_str() {
+                    // Add to list if files match extension
+                    if s == snippet_location.ext {
+                        res.push(dir_ent);
+                    }
                 }
             }
         }
@@ -61,21 +63,20 @@ pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -
     // Return snippets
     for entry in dir_entries {
         // Read the file name
-        let filename = entry.file_name();
+        let filename = entry.path();
         // Read the tags
         let tags = snippet::read_tags(entry.path().to_str().unwrap())?;
         
         // If tag is in the snippet, or no tags are given
         if keyword_slice.len() == 0 || tags.iter().fold(false, | res, tag| (res || keyword_slice.contains(&tag))) {
-            result.push(snippet::Snippet::new(filename.to_str().unwrap().into(), &tags));
+            result.push(snippet::Snippet::new(filename.to_str().unwrap().to_string(), &tags));
         }
     }
     Ok(result)
 }
 
 //// Start the different operation modes
-pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &str) -> Result<Vec<snippet::Snippet>, Error>{
-    let project = project::Project::default_project();
+pub fn start_operation(code: OpCode, project: &project::Project, keywords: Vec<String>, optional_filename: &str) -> Result<Vec<snippet::Snippet>, Error>{
     println!("Opcode {:?}", code);
 
     // Match on operation
@@ -83,7 +84,7 @@ pub fn start_operation(code: OpCode, keywords: Vec<String>, optional_filename: &
 
         OpCode::AddSnippet => {
             // Create the full path
-            let full_path = path::Path::new(&project.folder_name).join(optional_filename);
+            let full_path = path::Path::new(&project.locations[0].local).join(optional_filename);
             // Create the file
             if full_path.exists() {
                 return Err(InternalError("Snippet already exists".to_string()))
