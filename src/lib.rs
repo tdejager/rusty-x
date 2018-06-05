@@ -12,3 +12,4 @@ pub use snippet::{Snippet};
 
 mod error;
 pub use error::{Error};
+

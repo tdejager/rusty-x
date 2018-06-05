@@ -99,9 +99,9 @@ pub fn start_operation(code: OpCode, project: &project::Project, keywords: Vec<S
             file.write(b"\n==============\n")?;
             // Open vim on location
             let _output = Command::new("vim").
-                arg(full_path).spawn()?.wait_with_output()?;
+                arg(&full_path).spawn()?.wait_with_output()?;
 
-            let snippet = snippet::Snippet::new(String::from(optional_filename), &keywords);
+            let snippet = snippet::Snippet::new(full_path.into_os_string().into_string().unwrap(), &keywords);
             Ok(vec![snippet])
         }
 

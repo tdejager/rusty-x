@@ -69,7 +69,7 @@ fn main() -> Result<(), Error> {
         (OpCode::ListSnippets, "")
     };
 
-
+    // Try to get the project file
     let project_operation = Project::default_project()?;
 
     // Create a new project file if it does not exist
