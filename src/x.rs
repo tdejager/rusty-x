@@ -8,7 +8,6 @@ use std::process::Command;
 use std::fs;
 use std::path;
 use std::fs::File;
-use std::io::Read;
 use std::io::Write;
 
 #[derive(Debug)]
@@ -106,7 +105,6 @@ pub fn start_operation(code: OpCode, project: &project::Project, keywords: Vec<S
 
         // List snippets
         OpCode::ListSnippets => {
-            println!("List snippets");
              let files = find_snippets(&project)?;
              let snippets = load_snippets(&files , &keywords)?;
 

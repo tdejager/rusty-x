@@ -110,11 +110,17 @@ fn main() -> Result<(), Error> {
             {
                 // Retrieve names to show in multiple selection
                 let intermediate : Vec<String> = snippets.iter().map(|s| s.name.to_owned()).collect();
-                // Use library to do multiple selection for snippets
-                let to_show = show_multiple_results(&intermediate);
+                if intermediate.len() > 1 {
+                    // Use library to do multiple selection for snippets
+                    let to_show = show_multiple_results(&intermediate);
 
-                for i in to_show {
-                    let snip = &snippets[i];
+                    for i in to_show {
+                        let snip = &snippets[i];
+                        let full_path = path::Path::new(&snip.name);
+                        display_snippet(&full_path);
+                    }
+                } else if intermediate.len() == 1 {
+                    let snip = &snippets[0];
                     let full_path = path::Path::new(&snip.name);
                     display_snippet(&full_path);
                 }

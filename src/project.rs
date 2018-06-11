@@ -62,7 +62,7 @@ impl Project {
             // Read the file
             let mut f = File::open(path).expect("Found project file but can't read it.");
             let mut buffer = String::new();
-            f.read_to_string(&mut buffer);
+            f.read_to_string(&mut buffer)?;
 
             // Deserialize the toml
             let project: Project = toml::from_str(&buffer).expect("Cannot deserialize project file");
