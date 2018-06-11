@@ -5,18 +5,19 @@ authors = ["Tim de Jager <tdejager89@gmail.com>"]
 include = ["src/*.rs", "src/bin/*.rs"]
 
 [dependencies]
-clap = "~2.19.0"
+clap = "~2.26.2"
 colored = "1.6"
 markdown = "0.2"
 syntect = "1.8"
 toml = "0.4"
 serde_derive = "1.0.66"
 serde = "1.0.66"
+skim = "0.4.0"
 
 [lib]
 path = "src/lib.rs"
 
 
 [[bin]]
-name = "rusty-x"
+name = "x"
 path = "src/bin/main.rs"

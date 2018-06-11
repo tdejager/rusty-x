@@ -77,7 +77,6 @@ pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -
 
 //// Start the different operation modes
 pub fn start_operation(code: OpCode, project: &project::Project, keywords: Vec<String>, optional_filename: &str) -> Result<Vec<snippet::Snippet>, Error>{
-    println!("Opcode {:?}", code);
 
     // Match on operation
     let result = match code {
@@ -96,7 +95,7 @@ pub fn start_operation(code: OpCode, project: &project::Project, keywords: Vec<S
                 file.write(keyword.as_bytes())?;
                 file.write(b",")?;
             }
-            file.write(b"\n==============\n")?;
+
             // Open vim on location
             let _output = Command::new("vim").
                 arg(&full_path).spawn()?.wait_with_output()?;

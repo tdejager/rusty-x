@@ -6,14 +6,7 @@ extern crate x;
 
 use x::{start_operation, Error, OpCode, Project, ProjectOperation};
 
-use std::io;
-use std::process;
-
-use std::fs;
 use std::path;
-use std::fs::File;
-use std::io::Read;
-use std::io::Write;
 use std::io::BufRead;
 use std::env;
 
@@ -21,10 +14,16 @@ extern crate syntect;
 
 use syntect::parsing::SyntaxSet;
 use syntect::easy::HighlightFile;
-use syntect::highlighting::{Theme, ThemeSet, Style};
+use syntect::highlighting::{ThemeSet, Style};
 use syntect::util::as_24_bit_terminal_escaped;
 
-fn display_snippet(full_path: &path::PathBuf) {
+extern crate skim;
+
+use skim::{Skim, SkimOptions};
+use std::default::Default;
+use std::io::Cursor;
+
+fn display_snippet(full_path: &path::Path) {
     let ss = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
     let theme = ts.themes.get("base16-ocean.dark");
@@ -42,6 +41,19 @@ fn display_snippet(full_path: &path::PathBuf) {
 
     // Clear the formatting
     println!("\x1b[0m");
+}
+
+fn show_multiple_results(selections: &Vec<String>) -> Vec<usize> {
+
+    let options: SkimOptions = SkimOptions::default().height("50%").multi(true);
+
+    let joined = selections.iter().fold(String::new(), |acc, s| acc + s + "\n");
+
+    let selected_items = Skim::run_with(&options, Some(Box::new(Cursor::new(joined))))
+        .map(|out| out.selected_items)
+        .unwrap_or_else(|| Vec::new());
+
+    selected_items.iter().map(|item| item.get_index()).collect()
 }
 
 fn main() -> Result<(), Error> {
@@ -81,7 +93,7 @@ fn main() -> Result<(), Error> {
                     .to_str().unwrap());
                 project.write(home.as_ref())?;
                 project
-            },
+            }
         ProjectOperation::Exist(project) => { project }
     };
 
@@ -96,11 +108,15 @@ fn main() -> Result<(), Error> {
             }
         Ok(snippets) =>
             {
-                for snip in &snippets {
-                    let full_path = path::Path::new(&snip.name).join(snip.name.to_owned());
+                // Retrieve names to show in multiple selection
+                let intermediate : Vec<String> = snippets.iter().map(|s| s.name.to_owned()).collect();
+                // Use library to do multiple selection for snippets
+                let to_show = show_multiple_results(&intermediate);
+
+                for i in to_show {
+                    let snip = &snippets[i];
+                    let full_path = path::Path::new(&snip.name);
                     display_snippet(&full_path);
-                    //let mut contents = fs::read_to_string(&full_path)?;
-                    //println!("{:?}", contents);
                 }
                 Ok(())
             }
