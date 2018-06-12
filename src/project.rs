@@ -2,7 +2,8 @@ extern crate toml;
 extern crate serde;
 use std::env;
 use std::path;
-use std::fs::File;
+use std::fs;
+use std::fs::{File};
 use std::io::{Write, Read};
 use error;
 
@@ -23,6 +24,15 @@ impl SnippetLocation {
             git: None
         }
     }
+
+    /// Create the folder of the SnippetLocation if it does not exist
+    pub fn create_if_not_exists(&self) -> Result<(), error::Error> {
+        let path = path::Path::new(&self.local);
+        if !path.exists() {
+            fs::create_dir_all(&path)?;
+        }
+        Ok(())
+    }
 }
 
 /// Project folder structure
@@ -41,7 +51,7 @@ impl Project {
     /// Write a project
     pub fn write(&self, folder : &path::Path) -> Result<(), error::Error> {
         let to_write = toml::to_string(self).expect("Cannot serialize project");
-        let full_path = path::Path::new(&folder).join(".rusty-x.toml");
+        let full_path = path::Path::new(&folder).join(".x.toml");
         println!("Writing to {:?}", full_path);
         let mut f = File::create(&full_path).expect("Cannot create project file");
         f.write_all(to_write.as_bytes()).expect("Cannot write to project file");
@@ -53,7 +63,7 @@ impl Project {
                                 .expect("Cannot find the home dir")
                                 .to_str().unwrap());
 
-        let format = format!("{}/.rusty-x.toml", &home);
+        let format = format!("{}/.x.toml", &home);
         let path = path::Path::new(&format);
 
         // If exists than deserialize toml
