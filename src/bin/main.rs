@@ -2,9 +2,9 @@ extern crate clap;
 
 use clap::{Arg, App, SubCommand};
 
-extern crate x;
+extern crate rusty_x;
 
-use x::{start_operation, Error, OpCode, Project, ProjectOperation};
+use rusty_x::{start_operation, Error, OpCode, Project, ProjectOperation};
 
 use std::path;
 use std::io::BufRead;
