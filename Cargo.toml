@@ -1,8 +1,13 @@
 [package]
-name = "x"
+name = "rusty-x"
 version = "0.1.0"
 authors = ["Tim de Jager <tdejager89@gmail.com>"]
 include = ["src/*.rs", "src/bin/*.rs"]
+readme = "README.md"
+keywords = ["snippets", "cli"]
+repository = "https://github.com/tdejager/rusty-x"
+license = "MIT"
+
 
 [dependencies]
 clap = "~2.26.2"
