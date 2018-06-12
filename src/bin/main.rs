@@ -23,6 +23,7 @@ use skim::{Skim, SkimOptions};
 use std::default::Default;
 use std::io::Cursor;
 
+/// Display the snippet on the command line
 fn display_snippet(full_path: &path::Path) {
     let ss = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
@@ -43,6 +44,7 @@ fn display_snippet(full_path: &path::Path) {
     println!("\x1b[0m");
 }
 
+/// Use skim to show multiple results, where selections is the files to select
 fn show_multiple_results(selections: &Vec<String>) -> Vec<usize> {
 
     let options: SkimOptions = SkimOptions::default().height("50%").multi(true);
@@ -96,6 +98,11 @@ fn main() -> Result<(), Error> {
             }
         ProjectOperation::Exist(project) => { project }
     };
+
+    // Check if the snippets folder exits and make it if it does not
+    for location in &project.locations {
+        location.create_if_not_exists()?;
+    }
 
     // Pass keywords or options
     let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
