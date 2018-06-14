@@ -27,7 +27,7 @@ use std::io::Cursor;
 fn display_snippet(full_path: &path::Path) {
     let ss = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
-    let theme = ts.themes.get("base16-ocean.dark");
+    let theme = ts.themes.get("base16-eighties.dark");
 
     let mut highlighter = HighlightFile::new(full_path, &ss, theme.unwrap()).unwrap();
     let mut line = String::new();
