@@ -111,12 +111,15 @@ fn main() -> Result<(), Error> {
     match res {
         Err(err) =>
             {
+                // Return error in case of an error
                 Err(err)
             }
         Ok(snippets) =>
             {
                 // Retrieve names to show in multiple selection
-                let intermediate : Vec<String> = snippets.iter().map(|s| s.name.to_owned()).collect();
+                // let intermediate : Vec<String> = snippets.iter().map(|s| s.name.to_owned()).collect();
+
+                let intermediate : Vec<String> = snippets.iter().map(|s| s.tags.iter().fold(String::new(), |s, val| { (s + "|" + val).to_owned()})).collect();
                 if intermediate.len() > 1 {
                     // Use library to do multiple selection for snippets
                     let to_show = show_multiple_results(&intermediate);
