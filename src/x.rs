@@ -1,7 +1,7 @@
 use project;
 use snippet;
 use error::Error;
-use error::Error::{InternalError};
+use error::Error::InternalError;
 
 use std::process::Command;
 
@@ -15,9 +15,9 @@ pub enum OpCode {
     // For the add snippet command
     AddSnippet,
     // For listing snippets
-    ListSnippets,
+    ListSnippets(bool),
     // For syncing snippets with the server
-    SyncSnippets
+    SyncSnippets,
 }
 
 
@@ -25,7 +25,7 @@ pub enum OpCode {
 pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, Error> {
 
     // Crawl through directory that is set as project root
-    let mut res : Vec<fs::DirEntry> = Vec::new();
+    let mut res: Vec<fs::DirEntry> = Vec::new();
 
     // Read the entries in the folder
     for snippet_location in project.locations.iter() {
@@ -54,9 +54,9 @@ pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, Er
 }
 
 /// Load snippets from the dir entries
-pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -> Result<Vec<snippet::Snippet>, Error>
+pub fn load_snippets(dir_entries: &Vec<fs::DirEntry>, keywords: &Vec<String>) -> Result<Vec<snippet::Snippet>, Error>
 {
-    let mut result : Vec<snippet::Snippet> = Vec::new();
+    let mut result: Vec<snippet::Snippet> = Vec::new();
     let keyword_slice = keywords.as_slice();
 
     // Return snippets
@@ -65,27 +65,35 @@ pub fn load_snippets(dir_entries : &Vec<fs::DirEntry>, keywords: &Vec<String>) -
         let filename = entry.path();
         // Read the tags
         let tags = snippet::read_tags(entry.path().to_str().unwrap())?;
-        
+
         // If tag is in the snippet, or no tags are given
-        if keyword_slice.len() == 0 || tags.iter().fold(false, | res, tag| (res || keyword_slice.contains(&tag))) {
+        if keyword_slice.len() == 0 || tags.iter().fold(false, |res, tag| (res || keyword_slice.contains(&tag))) {
             result.push(snippet::Snippet::new(filename.to_str().unwrap().to_string(), &tags));
         }
     }
     Ok(result)
 }
 
+//// Edit snippets
+pub fn edit_snippet(program: &str, full_path: &path::Path) -> Result<(), Error>
+{
+    let _output = Command::new("vim").
+        arg(&full_path).spawn()?.wait_with_output()?;
+
+    Ok(())
+}
+
 //// Start the different operation modes
-pub fn start_operation(code: OpCode, project: &project::Project, keywords: Vec<String>, optional_filename: &str) -> Result<Vec<snippet::Snippet>, Error>{
+pub fn start_operation(code: &OpCode, project: &project::Project, keywords: Vec<String>, optional_filename: &str) -> Result<Vec<snippet::Snippet>, Error> {
 
     // Match on operation
     let result = match code {
-
         OpCode::AddSnippet => {
             // Create the full path
             let full_path = path::Path::new(&project.locations[0].local).join(optional_filename);
             // Create the file
             if full_path.exists() {
-                return Err(InternalError("Snippet already exists".to_string()))
+                return Err(InternalError("Snippet already exists".to_string()));
             }
             let mut file = File::create(&full_path)?;
 
@@ -96,20 +104,19 @@ pub fn start_operation(code: OpCode, project: &project::Project, keywords: Vec<S
             }
 
             // Open vim on location
-            let _output = Command::new("vim").
-                arg(&full_path).spawn()?.wait_with_output()?;
+            edit_snippet("vim", &full_path);
 
             let snippet = snippet::Snippet::new(full_path.into_os_string().into_string().unwrap(), &keywords);
             Ok(vec![snippet])
         }
 
         // List snippets
-        OpCode::ListSnippets => {
-             let files = find_snippets(&project)?;
-             let snippets = load_snippets(&files , &keywords)?;
+        OpCode::ListSnippets(_) => {
+            let files = find_snippets(&project)?;
+            let snippets = load_snippets(&files, &keywords)?;
 
-             Ok(snippets)
-        },
+            Ok(snippets)
+        }
 
         // Sync snippets
         OpCode::SyncSnippets => {

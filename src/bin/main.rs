@@ -4,7 +4,7 @@ use clap::{Arg, App, SubCommand};
 
 extern crate rusty_x;
 
-use rusty_x::{start_operation, Error, OpCode, Project, ProjectOperation};
+use rusty_x::{start_operation, edit_snippet, Error, OpCode, Project, ProjectOperation};
 
 use std::path;
 use std::io::BufRead;
@@ -72,15 +72,20 @@ fn main() -> Result<(), Error> {
             .arg(Arg::with_name("filename")
                 .help("Snippet file name")
                 .required(true)))
+        .subcommand(SubCommand::with_name("edit"))
+            .about("Edit a snippet")
         .get_matches();
 
     // Should add
     let add = matches.subcommand_matches("add");
+    let edit = matches.subcommand_matches("edit");
 
     let (op_code, filename) = if let Some(matches) = add {
         (OpCode::AddSnippet, matches.value_of("filename").unwrap())
+    } else if let Some(matches) = edit {
+        (OpCode::ListSnippets(true), "")
     } else {
-        (OpCode::ListSnippets, "")
+        (OpCode::ListSnippets(false), "")
     };
 
     // Try to get the project file
@@ -106,7 +111,7 @@ fn main() -> Result<(), Error> {
 
     // Pass keywords or options
     let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
-    let res = start_operation(op_code, &project, keywords, filename);
+    let res = start_operation(&op_code, &project, keywords, filename);
 
     match res {
         Err(err) =>
@@ -127,7 +132,12 @@ fn main() -> Result<(), Error> {
                     for i in to_show {
                         let snip = &snippets[i];
                         let full_path = path::Path::new(&snip.name);
-                        display_snippet(&full_path);
+                        if let OpCode::ListSnippets(true) = op_code
+                        {
+                            edit_snippet("vim", full_path);
+                        } else {
+                            display_snippet(&full_path);
+                        }
                     }
                 } else if intermediate.len() == 1 {
                     let snip = &snippets[0];
