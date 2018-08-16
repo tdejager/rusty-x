@@ -1,27 +1,48 @@
-extern crate clap;
-
-use clap::{Arg, App, SubCommand};
+#[macro_use]
+extern crate serde_derive;
+extern crate docopt;
 
 extern crate rusty_x;
+extern crate syntect;
+extern crate skim;
 
-use rusty_x::{start_operation, edit_snippet, Error, OpCode, Project, ProjectOperation};
 
 use std::path;
 use std::io::BufRead;
 use std::env;
+use std::default::Default;
+use std::io::Cursor;
 
-extern crate syntect;
+use docopt::Docopt;
 
 use syntect::parsing::SyntaxSet;
 use syntect::easy::HighlightFile;
 use syntect::highlighting::{ThemeSet, Style};
 use syntect::util::as_24_bit_terminal_escaped;
-
-extern crate skim;
-
 use skim::{Skim, SkimOptions};
-use std::default::Default;
-use std::io::Cursor;
+
+use rusty_x::{start_operation, edit_snippet, Error, OpCode, Project, ProjectOperation};
+
+
+const USAGE: &'static str = "\
+Usage: x [--add=<filename>] <keywords>...
+       x [--edit] <keywords>...
+
+Options:
+    -h, --help           Show this message
+    --add=<filename>     Add a new snippet with given filename and keywords
+    -e, --edit           Edit a existing snippet
+\
+";
+
+#[derive(Debug, Deserialize)]
+struct Args
+{
+    arg_keywords: Vec<String>,
+    flag_add: String,
+    flag_edit: bool,
+}
+
 
 /// Display the snippet on the command line
 fn display_snippet(full_path: &path::Path) {
@@ -46,7 +67,6 @@ fn display_snippet(full_path: &path::Path) {
 
 /// Use skim to show multiple results, where selections is the files to select
 fn show_multiple_results(selections: &Vec<String>) -> Vec<usize> {
-
     let options: SkimOptions = SkimOptions::default().height("50%").multi(true);
 
     let joined = selections.iter().fold(String::new(), |acc, s| acc + s + "\n");
@@ -58,34 +78,19 @@ fn show_multiple_results(selections: &Vec<String>) -> Vec<usize> {
     selected_items.iter().map(|item| item.get_index()).collect()
 }
 
+
 fn main() -> Result<(), Error> {
-    let matches = App::new("Rusty X")
-        .version("0.1")
-        .author("Tim de Jager <tdejager89@gmail.com>")
-        .about("Rusty snippet manager")
-        .arg(Arg::with_name("KEYWORDS")
-            .help("Keywords to search for")
-            .required(true)
-            .multiple(true))
-        .subcommand(SubCommand::with_name("add")
-            .about("Add a snippet")
-            .arg(Arg::with_name("filename")
-                .help("Snippet file name")
-                .required(true)))
-        .subcommand(SubCommand::with_name("edit"))
-            .about("Edit a snippet")
-        .get_matches();
+    let args: Args = Docopt::new(USAGE).and_then(|d| d.deserialize())
+        .unwrap_or_else(|e| e.exit());
 
-    // Should add
-    let add = matches.subcommand_matches("add");
-    let edit = matches.subcommand_matches("edit");
+    println!("{:?}", args);
 
-    let (op_code, filename) = if let Some(matches) = add {
-        (OpCode::AddSnippet, matches.value_of("filename").unwrap())
-    } else if let Some(matches) = edit {
-        (OpCode::ListSnippets(true), "")
+    let (op_code, filename) = if !args.flag_add.is_empty() {
+        (OpCode::AddSnippet, args.flag_add)
+    } else if args.flag_edit {
+        (OpCode::ListSnippets(true), String::new())
     } else {
-        (OpCode::ListSnippets(false), "")
+        (OpCode::ListSnippets(false), String::new())
     };
 
     // Try to get the project file
@@ -110,8 +115,8 @@ fn main() -> Result<(), Error> {
     }
 
     // Pass keywords or options
-    let keywords: Vec<String> = matches.values_of("KEYWORDS").unwrap().map(|s| s.to_string()).collect();
-    let res = start_operation(&op_code, &project, keywords, filename);
+    let keywords: Vec<String> = args.arg_keywords;
+    let res = start_operation(&op_code, &project, keywords, &filename);
 
     match res {
         Err(err) =>
@@ -124,7 +129,7 @@ fn main() -> Result<(), Error> {
                 // Retrieve names to show in multiple selection
                 // let intermediate : Vec<String> = snippets.iter().map(|s| s.name.to_owned()).collect();
 
-                let intermediate : Vec<String> = snippets.iter().map(|s| s.tags.iter().fold(String::new(), |s, val| { (s + "|" + val).to_owned()})).collect();
+                let intermediate: Vec<String> = snippets.iter().map(|s| s.tags.iter().fold(String::new(), |s, val| { (s + "|" + val).to_owned() })).collect();
                 if intermediate.len() > 1 {
                     // Use library to do multiple selection for snippets
                     let to_show = show_multiple_results(&intermediate);
@@ -133,9 +138,9 @@ fn main() -> Result<(), Error> {
                         let snip = &snippets[i];
                         let full_path = path::Path::new(&snip.name);
                         if let OpCode::ListSnippets(true) = op_code
-                        {
-                            edit_snippet("vim", full_path);
-                        } else {
+                            {
+                                edit_snippet("vim", full_path)?;
+                            } else {
                             display_snippet(&full_path);
                         }
                     }
