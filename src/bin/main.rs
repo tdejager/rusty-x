@@ -163,7 +163,7 @@ fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Erro
 
         // Same as above
         if let OpCode::ListSnippets(true) = op_code {
-            edit_snippet("vim", full_path);
+            edit_snippet("vim", full_path)?;
         }
         // Display oherwise
         display_snippet(&full_path);
