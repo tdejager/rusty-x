@@ -22,6 +22,7 @@ use syntect::util::as_24_bit_terminal_escaped;
 use skim::{Skim, SkimOptions};
 
 use rusty_x::{start_operation, edit_snippet, Error, OpCode, Project, ProjectOperation};
+use rusty_x::Snippet;
 
 
 const USAGE: &'static str = "\
@@ -70,6 +71,8 @@ fn show_multiple_results(selections: &Vec<String>) -> Vec<usize> {
     let options: SkimOptions = SkimOptions::default().height("50%").multi(true);
 
     let joined = selections.iter().fold(String::new(), |acc, s| acc + s + "\n");
+
+
 
     let selected_items = Skim::run_with(&options, Some(Box::new(Cursor::new(joined))))
         .map(|out| out.selected_items)
@@ -129,27 +132,41 @@ fn main() -> Result<(), Error> {
                 // Retrieve names to show in multiple selection
                 // let intermediate : Vec<String> = snippets.iter().map(|s| s.name.to_owned()).collect();
 
-                let intermediate: Vec<String> = snippets.iter().map(|s| s.tags.iter().fold(String::new(), |s, val| { (s + "|" + val).to_owned() })).collect();
-                if intermediate.len() > 1 {
-                    // Use library to do multiple selection for snippets
-                    let to_show = show_multiple_results(&intermediate);
-
-                    for i in to_show {
-                        let snip = &snippets[i];
-                        let full_path = path::Path::new(&snip.name);
-                        if let OpCode::ListSnippets(true) = op_code
-                            {
-                                edit_snippet("vim", full_path)?;
-                            } else {
-                            display_snippet(&full_path);
-                        }
-                    }
-                } else if intermediate.len() == 1 {
-                    let snip = &snippets[0];
-                    let full_path = path::Path::new(&snip.name);
-                    display_snippet(&full_path);
-                }
-                Ok(())
+                process_snippets(op_code, &snippets)
             }
     }
+}
+
+fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Error> {
+
+    let intermediate: Vec<String> = snippets.iter().map(|s| s.tags.iter().fold(String::new(), |s, val| { (s + "|" + val).to_owned() })).collect();
+    if intermediate.len() > 1 {
+        // Use library to do multiple selection for snippets
+        let to_show = show_multiple_results(&intermediate);
+
+        for i in to_show {
+            let snip = &snippets[i];
+            let full_path = path::Path::new(&snip.name);
+            // If we chose to edit the snippet use the edit command
+            if let OpCode::ListSnippets(true) = op_code
+                {
+                    edit_snippet("vim", full_path)?;
+                } else {
+                // Otherwise display
+                display_snippet(&full_path);
+            }
+        }
+    } else if intermediate.len() == 1 {
+        // Display a single snippet
+        let snip = &snippets[0];
+        let full_path = path::Path::new(&snip.name);
+
+        // Same as above
+        if let OpCode::ListSnippets(true) = op_code {
+            edit_snippet("vim", full_path);
+        }
+        // Display oherwise
+        display_snippet(&full_path);
+    }
+    Ok(())
 }
