@@ -34,20 +34,31 @@ ext = "md"
 Usage
 =====
 
+```
+Usage: x [--add=<filename>] <keywords>...
+       x [--edit] <keywords>...
+
+Options:
+    -h, --help           Show this message
+    --add=<filename>     Add a new snippet with given filename and keywords
+    -e, --edit           Edit a existing snippet
+
+```
+
 To find files:
 
 ```bash
 cargo run <KEYWORDS>
 ```
 
-To add a snippet with a keyword line:
+To add a snippet with a keyword line, and a given filename:
 ```bash
-cargo run <KEYWORDS> add
+cargo run --add=foo.md <KEYWORDS>
 ```
 
 To edit a snippt with a given keywords:
 ```bash
-cargo run <KEYWORDS> edit
+cargo run --edit <KEYWORDS>
 ```
 
 Installed
@@ -56,7 +67,7 @@ Installed
 When installed from with cargo install, the commands start with `x`. So that means, e.g.:
 
 ```bash
-x python file
+x --edit python file
 ```
 
-To find a snippet with the keywords python and file
+To edit a snippet with the keywords python and file.
