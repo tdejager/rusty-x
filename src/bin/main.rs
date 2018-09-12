@@ -86,8 +86,6 @@ fn main() -> Result<(), Error> {
     let args: Args = Docopt::new(USAGE).and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
-    println!("{:?}", args);
-
     let (op_code, filename) = if !args.flag_add.is_empty() {
         (OpCode::AddSnippet, args.flag_add)
     } else if args.flag_edit {
@@ -103,14 +101,17 @@ fn main() -> Result<(), Error> {
     let project = match project_operation {
         ProjectOperation::NotExist(project) =>
             {
-                let home = String::from(dirs::home_dir()
-                    .expect("Cannot find the home dir")
-                    .to_str().unwrap());
-                project.write(home.as_ref())?;
                 project
             }
         ProjectOperation::Exist(project) => { project }
     };
+
+    // TODO: Find a cleaner way, without writing all the time
+    // Write anyway to be sure changes are merged
+    let home = String::from(dirs::home_dir()
+        .expect("Cannot find the home dir")
+        .to_str().unwrap());
+    project.write(home.as_ref())?;
 
     // Check if the snippets folder exits and make it if it does not
     for location in &project.locations {

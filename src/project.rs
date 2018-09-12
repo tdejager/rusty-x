@@ -1,16 +1,16 @@
 extern crate toml;
 extern crate serde;
 extern crate dirs;
+
 use std::path;
 use std::fs;
-use std::fs::{File};
+use std::fs::File;
 use std::io::{Write, Read};
 use error;
-
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 /// Location of the snippets
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SnippetLocation {
     pub local: String,
     pub ext: String,
@@ -18,13 +18,12 @@ pub struct SnippetLocation {
 }
 
 impl SnippetLocation {
-
     pub fn default(home: &String) -> SnippetLocation {
-        return SnippetLocation{
+        return SnippetLocation {
             local: String::from(home.to_owned() + "/.snippets"),
             ext: "md".to_string(),
-            git: None
-        }
+            git: None,
+        };
     }
 
     /// Create the folder of the SnippetLocation if it does not exist
@@ -47,11 +46,15 @@ impl SnippetLocation {
 
 
     fn has_git_support(&self) -> Result<bool, error::Error> {
-        let output = Command::new("git rev-parse --is-inside-work-tree").spawn()?.wait_with_output();
+        let output = Command::new("git")
+            .stdout(Stdio::piped())
+            .args(&["rev-parse", "--is-inside-work-tree"])
+            .spawn()?
+            .wait_with_output();
         let output_str_result = String::from_utf8(output?.stdout);
         match output_str_result {
             Ok(s) => {
-                if s == "true" {
+                if s.eq_ignore_ascii_case("true\n") {
                     return Ok(true);
                 } else {
                     return Ok(false);
@@ -70,16 +73,14 @@ pub struct Project {
 
 pub enum ProjectOperation {
     Exist(Project),
-    NotExist(Project)
+    NotExist(Project),
 }
 
 impl Project {
-
     /// Write a project
-    pub fn write(&self, folder : &path::Path) -> Result<(), error::Error> {
+    pub fn write(&self, folder: &path::Path) -> Result<(), error::Error> {
         let to_write = toml::to_string(self).expect("Cannot serialize project");
         let full_path = path::Path::new(&folder).join(".x.toml");
-        println!("Writing to {:?}", full_path);
         let mut f = File::create(&full_path).expect("Cannot create project file");
         f.write_all(to_write.as_bytes()).expect("Cannot write to project file");
         Ok(())
@@ -87,8 +88,8 @@ impl Project {
     /// Get the default project location
     pub fn default_project() -> Result<ProjectOperation, error::Error> {
         let home = String::from(dirs::home_dir()
-                                .expect("Cannot find the home dir")
-                                .to_str().unwrap());
+            .expect("Cannot find the home dir")
+            .to_str().unwrap());
 
         let format = format!("{}/.x.toml", &home);
         let path = path::Path::new(&format);
@@ -105,12 +106,13 @@ impl Project {
             let project: Project = toml::from_str(&buffer).expect("Cannot deserialize project file");
             ProjectOperation::Exist(project)
         } else {
-            ProjectOperation::NotExist(Project{locations: vec![SnippetLocation::default(&home)]})
+            ProjectOperation::NotExist(Project { locations: vec![SnippetLocation::default(&home)] })
         };
 
         // Determine git status
         if let ProjectOperation::Exist(ref mut project) = project_operation {
             for location in &mut project.locations {
+                println!("{:?}", &location);
                 if location.git == None {
                     location.determine_git_support().expect("Cannot determine git support for project location");
                 }
@@ -118,6 +120,5 @@ impl Project {
         }
 
         Ok(project_operation)
-
     }
 }
