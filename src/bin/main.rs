@@ -10,7 +10,6 @@ extern crate dirs;
 
 use std::path;
 use std::io::BufRead;
-use std::env;
 use std::default::Default;
 use std::io::Cursor;
 
@@ -130,9 +129,6 @@ fn main() -> Result<(), Error> {
             }
         Ok(snippets) =>
             {
-                // Retrieve names to show in multiple selection
-                // let intermediate : Vec<String> = snippets.iter().map(|s| s.name.to_owned()).collect();
-
                 process_snippets(op_code, &snippets)
             }
     }
@@ -141,6 +137,8 @@ fn main() -> Result<(), Error> {
 fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Error> {
 
     let intermediate: Vec<String> = snippets.iter().map(|s| s.tags.iter().fold(String::new(), |s, val| { (s + "|" + val).to_owned() })).collect();
+
+    // We have more than 1 result
     if intermediate.len() > 1 {
         // Use library to do multiple selection for snippets
         let to_show = show_multiple_results(&intermediate);
@@ -166,7 +164,7 @@ fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Erro
         if let OpCode::ListSnippets(true) = op_code {
             edit_snippet("vim", full_path)?;
         }
-        // Display oherwise
+        // Display otherwise
         display_snippet(&full_path);
     }
     Ok(())
