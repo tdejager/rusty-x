@@ -8,7 +8,6 @@ use rusty_x::{start_operation, edit_snippet, Error, OpCode, Project, ProjectOper
 
 use std::path;
 use std::io::BufRead;
-use std::env;
 
 extern crate syntect;
 
@@ -22,6 +21,9 @@ extern crate skim;
 use skim::{Skim, SkimOptions};
 use std::default::Default;
 use std::io::Cursor;
+
+extern crate dirs;
+
 
 /// Display the snippet on the command line
 fn display_snippet(full_path: &path::Path) {
@@ -82,7 +84,7 @@ fn main() -> Result<(), Error> {
 
     let (op_code, filename) = if let Some(matches) = add {
         (OpCode::AddSnippet, matches.value_of("filename").unwrap())
-    } else if let Some(matches) = edit {
+    } else if let Some(_matches) = edit {
         (OpCode::ListSnippets(true), "")
     } else {
         (OpCode::ListSnippets(false), "")
@@ -95,7 +97,7 @@ fn main() -> Result<(), Error> {
     let project = match project_operation {
         ProjectOperation::NotExist(project) =>
             {
-                let home = String::from(env::home_dir()
+                let home = String::from(dirs::home_dir()
                     .expect("Cannot find the home dir")
                     .to_str().unwrap());
                 project.write(home.as_ref())?;
@@ -134,7 +136,7 @@ fn main() -> Result<(), Error> {
                         let full_path = path::Path::new(&snip.name);
                         if let OpCode::ListSnippets(true) = op_code
                         {
-                            edit_snippet("vim", full_path);
+                            edit_snippet("vim", full_path)?;
                         } else {
                             display_snippet(&full_path);
                         }

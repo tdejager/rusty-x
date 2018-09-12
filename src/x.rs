@@ -77,7 +77,7 @@ pub fn load_snippets(dir_entries: &Vec<fs::DirEntry>, keywords: &Vec<String>) ->
 //// Edit snippets
 pub fn edit_snippet(program: &str, full_path: &path::Path) -> Result<(), Error>
 {
-    let _output = Command::new("vim").
+    let _output = Command::new(program).
         arg(&full_path).spawn()?.wait_with_output()?;
 
     Ok(())
@@ -104,7 +104,7 @@ pub fn start_operation(code: &OpCode, project: &project::Project, keywords: Vec<
             }
 
             // Open vim on location
-            edit_snippet("vim", &full_path);
+            edit_snippet("vim", &full_path)?;
 
             let snippet = snippet::Snippet::new(full_path.into_os_string().into_string().unwrap(), &keywords);
             Ok(vec![snippet])

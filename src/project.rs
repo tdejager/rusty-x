@@ -1,18 +1,20 @@
 extern crate toml;
 extern crate serde;
-use std::env;
+extern crate dirs;
 use std::path;
 use std::fs;
 use std::fs::{File};
 use std::io::{Write, Read};
 use error;
 
+use std::process::Command;
+
 /// Location of the snippets
 #[derive(Serialize, Deserialize)]
 pub struct SnippetLocation {
     pub local: String,
     pub ext: String,
-    pub git: Option<String>,
+    pub git: Option<bool>,
 }
 
 impl SnippetLocation {
@@ -32,6 +34,31 @@ impl SnippetLocation {
             fs::create_dir_all(&path)?;
         }
         Ok(())
+    }
+
+    pub fn determine_git_support(&mut self) -> Result<(), error::Error> {
+        if self.has_git_support()? {
+            self.git = Some(true)
+        } else {
+            self.git = Some(false)
+        };
+        Ok(())
+    }
+
+
+    fn has_git_support(&self) -> Result<bool, error::Error> {
+        let output = Command::new("git rev-parse --is-inside-work-tree").spawn()?.wait_with_output();
+        let output_str_result = String::from_utf8(output?.stdout);
+        match output_str_result {
+            Ok(s) => {
+                if s == "true" {
+                    return Ok(true);
+                } else {
+                    return Ok(false);
+                }
+            }
+            Err(_) => Ok(false)
+        }
     }
 }
 
@@ -59,7 +86,7 @@ impl Project {
     }
     /// Get the default project location
     pub fn default_project() -> Result<ProjectOperation, error::Error> {
-        let home = String::from(env::home_dir()
+        let home = String::from(dirs::home_dir()
                                 .expect("Cannot find the home dir")
                                 .to_str().unwrap());
 
@@ -67,7 +94,7 @@ impl Project {
         let path = path::Path::new(&format);
 
         // If exists than deserialize toml
-        if path.exists() {
+        let mut project_operation = if path.exists() {
 
             // Read the file
             let mut f = File::open(path).expect("Found project file but can't read it.");
@@ -76,9 +103,21 @@ impl Project {
 
             // Deserialize the toml
             let project: Project = toml::from_str(&buffer).expect("Cannot deserialize project file");
-            return Ok(ProjectOperation::Exist(project));
+            ProjectOperation::Exist(project)
+        } else {
+            ProjectOperation::NotExist(Project{locations: vec![SnippetLocation::default(&home)]})
+        };
+
+        // Determine git status
+        if let ProjectOperation::Exist(ref mut project) = project_operation {
+            for location in &mut project.locations {
+                if location.git == None {
+                    location.determine_git_support().expect("Cannot determine git support for project location");
+                }
+            }
         }
 
-        Ok(ProjectOperation::NotExist(Project{ locations: vec![SnippetLocation::default(&home)]}))
+        Ok(project_operation)
+
     }
 }

@@ -18,6 +18,7 @@ syntect = "1.8"
 toml = "0.4"
 serde_derive = "1.0.66"
 serde = "1.0.66"
+dirs = "1.0.3"
 skim = "0.4.0"
 
 [lib]
