@@ -5,6 +5,7 @@ use error::Error::InternalError;
 
 use std::process::Command;
 
+use std::env;
 use std::fs;
 use std::path;
 use std::fs::File;
@@ -77,7 +78,12 @@ pub fn load_snippets(dir_entries: &Vec<fs::DirEntry>, keywords: &Vec<String>) ->
 //// Edit snippets
 pub fn edit_snippet(program: &str, full_path: &path::Path) -> Result<(), Error>
 {
-    let _output = Command::new(program).
+    let final_editor: String;
+    if let Ok(editor) = env::var("EDITOR") {
+        final_editor = editor.into();
+    } else { final_editor = program.into() };
+
+    let _output = Command::new(final_editor).
         arg(&full_path).spawn()?.wait_with_output()?;
 
     Ok(())
