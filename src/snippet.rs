@@ -1,7 +1,6 @@
-
-use std::fs::File;
-use std::io::{BufReader, BufRead};
 use error;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 /**
  * The snippet struct that has uses multiple tags, to order the snippets
@@ -9,19 +8,19 @@ use error;
 #[derive(Debug)]
 pub struct Snippet {
     pub name: String,
-    pub tags: Vec<String>
+    pub tags: Vec<String>,
 }
 
 impl Snippet {
-
     pub fn new(name: String, tags: &Vec<String>) -> Snippet {
-        Snippet{name, tags: tags.to_owned()}
+        Snippet {
+            name,
+            tags: tags.to_owned(),
+        }
     }
-
 }
 
-pub fn read_tags(path: &str) -> Result<Vec<String>, error::Error>
-{
+pub fn read_tags(path: &str) -> Result<Vec<String>, error::Error> {
     // Open the file
     let f = File::open(path)?;
     let mut file = BufReader::new(f);
@@ -31,18 +30,11 @@ pub fn read_tags(path: &str) -> Result<Vec<String>, error::Error>
     file.read_line(&mut buffer)?;
 
     // Read the tags, remove empty ones
-    let mut t : Vec<&str> = buffer.as_str().trim().split(',').collect();
-    t.retain(|s| {!s.is_empty()});
+    let mut t: Vec<&str> = buffer.as_str().trim().split(',').collect();
+    t.retain(|s| !s.is_empty());
 
-    let tags : Vec<String>  = t.iter()
-        .map(|s| String::from(s.to_owned())).collect();
+    let tags: Vec<String> = t.iter().map(|s| String::from(s.to_owned())).collect();
 
     // Return the tags found
     Ok(tags)
 }
-
-
-
-
-
-

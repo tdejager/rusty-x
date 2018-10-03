@@ -3,7 +3,6 @@ use std::error::Error as StdError;
 use std::fmt;
 use std::io;
 
-
 #[derive(Debug)]
 pub enum Error {
     FileError(io::Error),
@@ -48,4 +47,3 @@ impl From<toml::de::Error> for Error {
         Error::InternalError(err.to_string())
     }
 }
-

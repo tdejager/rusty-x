@@ -1,15 +1,15 @@
-use project;
-use snippet;
 use error::Error;
 use error::Error::InternalError;
+use project;
+use snippet;
 
 use std::process::Command;
 
 use std::env;
 use std::fs;
-use std::path;
 use std::fs::File;
 use std::io::Write;
+use std::path;
 
 #[derive(Debug)]
 pub enum OpCode {
@@ -21,10 +21,8 @@ pub enum OpCode {
     SyncSnippets,
 }
 
-
 /// Find the snippets associated with the project
 pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, Error> {
-
     // Crawl through directory that is set as project root
     let mut res: Vec<fs::DirEntry> = Vec::new();
 
@@ -55,8 +53,10 @@ pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, Er
 }
 
 /// Load snippets from the dir entries
-pub fn load_snippets(dir_entries: &Vec<fs::DirEntry>, keywords: &Vec<String>) -> Result<Vec<snippet::Snippet>, Error>
-{
+pub fn load_snippets(
+    dir_entries: &Vec<fs::DirEntry>,
+    keywords: &Vec<String>,
+) -> Result<Vec<snippet::Snippet>, Error> {
     let mut result: Vec<snippet::Snippet> = Vec::new();
     let keyword_slice = keywords.as_slice();
 
@@ -68,30 +68,44 @@ pub fn load_snippets(dir_entries: &Vec<fs::DirEntry>, keywords: &Vec<String>) ->
         let tags = snippet::read_tags(entry.path().to_str().unwrap())?;
 
         // If tag is in the snippet, or no tags are given
-        if keyword_slice.len() == 0 || tags.iter().fold(false, |res, tag| (res || keyword_slice.contains(&tag))) {
-            result.push(snippet::Snippet::new(filename.to_str().unwrap().to_string(), &tags));
+        if keyword_slice.len() == 0
+            || tags
+                .iter()
+                .fold(false, |res, tag| (res || keyword_slice.contains(&tag)))
+        {
+            result.push(snippet::Snippet::new(
+                filename.to_str().unwrap().to_string(),
+                &tags,
+            ));
         }
     }
     Ok(result)
 }
 
 //// Edit snippets
-pub fn edit_snippet(program: &str, full_path: &path::Path) -> Result<(), Error>
-{
+pub fn edit_snippet(program: &str, full_path: &path::Path) -> Result<(), Error> {
     let final_editor: String;
     if let Ok(editor) = env::var("EDITOR") {
         final_editor = editor.into();
-    } else { final_editor = program.into() };
+    } else {
+        final_editor = program.into()
+    };
 
-    let _output = Command::new(final_editor).
-        arg(&full_path).spawn()?.wait_with_output()?;
+    let _output = Command::new(final_editor)
+        .arg(&full_path)
+        .spawn()?
+        .wait_with_output()?;
 
     Ok(())
 }
 
 //// Start the different operation modes
-pub fn start_operation(code: &OpCode, project: &project::Project, keywords: Vec<String>, optional_filename: &str) -> Result<Vec<snippet::Snippet>, Error> {
-
+pub fn start_operation(
+    code: &OpCode,
+    project: &project::Project,
+    keywords: Vec<String>,
+    optional_filename: &str,
+) -> Result<Vec<snippet::Snippet>, Error> {
     // Match on operation
     let result = match code {
         OpCode::AddSnippet => {
@@ -112,7 +126,8 @@ pub fn start_operation(code: &OpCode, project: &project::Project, keywords: Vec<
             // Open vim on location
             edit_snippet("vim", &full_path)?;
 
-            let snippet = snippet::Snippet::new(full_path.into_os_string().into_string().unwrap(), &keywords);
+            let snippet =
+                snippet::Snippet::new(full_path.into_os_string().into_string().unwrap(), &keywords);
             Ok(vec![snippet])
         }
 
@@ -132,4 +147,3 @@ pub fn start_operation(code: &OpCode, project: &project::Project, keywords: Vec<
     };
     result
 }
-

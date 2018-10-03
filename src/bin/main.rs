@@ -2,28 +2,26 @@
 extern crate serde_derive;
 extern crate docopt;
 
-extern crate rusty_x;
-extern crate syntect;
-extern crate skim;
 extern crate dirs;
+extern crate rusty_x;
+extern crate skim;
+extern crate syntect;
 
-
-use std::path;
-use std::io::BufRead;
 use std::default::Default;
+use std::io::BufRead;
 use std::io::Cursor;
+use std::path;
 
 use docopt::Docopt;
 
-use syntect::parsing::SyntaxSet;
-use syntect::easy::HighlightFile;
-use syntect::highlighting::{ThemeSet, Style};
-use syntect::util::as_24_bit_terminal_escaped;
 use skim::{Skim, SkimOptions};
+use syntect::easy::HighlightFile;
+use syntect::highlighting::{Style, ThemeSet};
+use syntect::parsing::SyntaxSet;
+use syntect::util::as_24_bit_terminal_escaped;
 
-use rusty_x::{start_operation, edit_snippet, Error, OpCode, Project, ProjectOperation};
 use rusty_x::Snippet;
-
+use rusty_x::{edit_snippet, start_operation, Error, OpCode, Project, ProjectOperation};
 
 const USAGE: &'static str = "\
 Usage: x [--add=<filename>] <keywords>...
@@ -37,13 +35,11 @@ Options:
 ";
 
 #[derive(Debug, Deserialize)]
-struct Args
-{
+struct Args {
     arg_keywords: Vec<String>,
     flag_add: String,
     flag_edit: bool,
 }
-
 
 /// Display the snippet on the command line
 fn display_snippet(full_path: &path::Path) {
@@ -70,9 +66,9 @@ fn display_snippet(full_path: &path::Path) {
 fn show_multiple_results(selections: &Vec<String>) -> Vec<usize> {
     let options: SkimOptions = SkimOptions::default().height("50%").multi(true);
 
-    let joined = selections.iter().fold(String::new(), |acc, s| acc + s + "\n");
-
-
+    let joined = selections
+        .iter()
+        .fold(String::new(), |acc, s| acc + s + "\n");
 
     let selected_items = Skim::run_with(&options, Some(Box::new(Cursor::new(joined))))
         .map(|out| out.selected_items)
@@ -81,9 +77,9 @@ fn show_multiple_results(selections: &Vec<String>) -> Vec<usize> {
     selected_items.iter().map(|item| item.get_index()).collect()
 }
 
-
 fn main() -> Result<(), Error> {
-    let args: Args = Docopt::new(USAGE).and_then(|d| d.deserialize())
+    let args: Args = Docopt::new(USAGE)
+        .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
     let (op_code, filename) = if !args.flag_add.is_empty() {
@@ -99,18 +95,18 @@ fn main() -> Result<(), Error> {
 
     // Create a new project file if it does not exist
     let project = match project_operation {
-        ProjectOperation::NotExist(project) =>
-            {
-                project
-            }
-        ProjectOperation::Exist(project) => { project }
+        ProjectOperation::NotExist(project) => project,
+        ProjectOperation::Exist(project) => project,
     };
 
     // TODO: Find a cleaner way, without writing all the time
     // Write anyway to be sure changes are merged
-    let home = String::from(dirs::home_dir()
-        .expect("Cannot find the home dir")
-        .to_str().unwrap());
+    let home = String::from(
+        dirs::home_dir()
+            .expect("Cannot find the home dir")
+            .to_str()
+            .unwrap(),
+    );
     project.write(home.as_ref())?;
 
     // Check if the snippets folder exits and make it if it does not
@@ -123,21 +119,23 @@ fn main() -> Result<(), Error> {
     let res = start_operation(&op_code, &project, keywords, &filename);
 
     match res {
-        Err(err) =>
-            {
-                // Return error in case of an error
-                Err(err)
-            }
-        Ok(snippets) =>
-            {
-                process_snippets(op_code, &snippets)
-            }
+        Err(err) => {
+            // Return error in case of an error
+            Err(err)
+        }
+        Ok(snippets) => process_snippets(op_code, &snippets),
     }
 }
 
 fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Error> {
-
-    let intermediate: Vec<String> = snippets.iter().map(|s| s.tags.iter().fold(String::new(), |s, val| { (s + "|" + val).to_owned() })).collect();
+    let intermediate: Vec<String> = snippets
+        .iter()
+        .map(|s| {
+            s.tags
+                .iter()
+                .fold(String::new(), |s, val| (s + "|" + val).to_owned())
+        })
+        .collect();
 
     // We have more than 1 result
     if intermediate.len() > 1 {
@@ -148,10 +146,9 @@ fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Erro
             let snip = &snippets[i];
             let full_path = path::Path::new(&snip.name);
             // If we chose to edit the snippet use the edit command
-            if let OpCode::ListSnippets(true) = op_code
-                {
-                    edit_snippet("vim", full_path)?;
-                } else {
+            if let OpCode::ListSnippets(true) = op_code {
+                edit_snippet("vim", full_path)?;
+            } else {
                 // Otherwise display
                 display_snippet(&full_path);
             }

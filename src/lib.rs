@@ -2,14 +2,13 @@
 extern crate serde_derive;
 
 mod x;
-pub use x::{OpCode, start_operation, edit_snippet};
+pub use x::{edit_snippet, start_operation, OpCode};
 
 mod project;
 pub use project::{Project, ProjectOperation};
 
 mod snippet;
-pub use snippet::{Snippet};
+pub use snippet::Snippet;
 
 mod error;
-pub use error::{Error};
-
+pub use error::Error;
