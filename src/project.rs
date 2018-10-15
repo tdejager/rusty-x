@@ -3,11 +3,11 @@ extern crate serde;
 extern crate toml;
 
 use error;
+use git;
 use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path;
-use std::process::{Command, Stdio};
 
 /// Location of the snippets
 #[derive(Serialize, Deserialize, Debug)]
@@ -33,34 +33,6 @@ impl SnippetLocation {
             fs::create_dir_all(&path)?;
         }
         Ok(())
-    }
-
-    pub fn determine_git_support(&mut self) -> Result<(), error::Error> {
-        if self.has_git_support()? {
-            self.git = Some(true)
-        } else {
-            self.git = Some(false)
-        };
-        Ok(())
-    }
-
-    fn has_git_support(&self) -> Result<bool, error::Error> {
-        let output = Command::new("git")
-            .stdout(Stdio::piped())
-            .args(&["rev-parse", "--is-inside-work-tree"])
-            .spawn()?
-            .wait_with_output();
-        let output_str_result = String::from_utf8(output?.stdout);
-        match output_str_result {
-            Ok(s) => {
-                if s.eq_ignore_ascii_case("true\n") {
-                    return Ok(true);
-                } else {
-                    return Ok(false);
-                }
-            }
-            Err(_) => Ok(false),
-        }
     }
 }
 
@@ -116,14 +88,8 @@ impl Project {
 
         // Determine git status
         if let ProjectOperation::Exist(ref mut project) = project_operation {
-            for location in &mut project.locations {
-                println!("{:?}", &location);
-                if location.git == None {
-                    location
-                        .determine_git_support()
-                        .expect("Cannot determine git support for project location");
-                }
-            }
+            // Determine the git status
+            git::determine_git_status(project);
         }
 
         Ok(project_operation)

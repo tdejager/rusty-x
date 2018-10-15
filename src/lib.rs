@@ -12,3 +12,6 @@ pub use snippet::Snippet;
 
 mod error;
 pub use error::Error;
+
+mod git;
+pub use git::*;
