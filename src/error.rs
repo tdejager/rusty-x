@@ -2,6 +2,7 @@ extern crate toml;
 use std::error::Error as StdError;
 use std::fmt;
 use std::io;
+use std::string::FromUtf8Error;
 
 #[derive(Debug)]
 pub enum Error {
@@ -40,6 +41,10 @@ impl From<toml::ser::Error> for Error {
     fn from(err: toml::ser::Error) -> Error {
         Error::InternalError(err.to_string())
     }
+}
+
+impl From<FromUtf8Error> for Error {
+    fn from(err: FromUtf8Error) -> Error { Error::InternalError(err.to_string()) }
 }
 
 impl From<toml::de::Error> for Error {

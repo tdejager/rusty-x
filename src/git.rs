@@ -38,3 +38,29 @@ pub fn determine_git_support(location: &mut SnippetLocation) -> Result<bool, err
         Err(_) => Ok(false),
     }
 }
+
+/// Struct that gives the git status of the project
+pub enum GitStatus {
+    Clean,
+    Modified,
+}
+
+/// Determine the git file status for the snippet location
+pub fn determine_git_modified_status(location: &SnippetLocation) -> Result<GitStatus, error::Error> {
+    let output = Command::new("git")
+        .stdout(Stdio::piped())
+        .current_dir(&location.local)
+        .args(&["status", "--porcelain"])
+        .spawn()?
+        .wait_with_output();
+    let output_str_result = String::from_utf8(output?.stdout);
+
+    output_str_result.map(|s| {
+        if s.eq_ignore_ascii_case("") {
+            Ok(GitStatus::Clean)
+        } else {
+            Ok(GitStatus::Modified)
+        }
+    })?
+}
+
