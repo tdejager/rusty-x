@@ -7,6 +7,8 @@ extern crate rusty_x;
 extern crate skim;
 extern crate syntect;
 
+extern crate ansi_term;
+
 use std::default::Default;
 use std::io::BufRead;
 use std::io::Cursor;
@@ -126,13 +128,14 @@ fn main() -> Result<(), Error> {
         Ok(snippets) => process_snippets(op_code, &snippets),
     }?;
 
+    use ansi_term::Style;
     // Check if we have unsaved changes if so display
     for location in &project.locations {
         // If this is a git location
         if location.git == Some(true) {
             match rusty_x::determine_git_modified_status(location) {
                 Ok(rusty_x::GitStatus::Modified) => {
-                    println!("{} has modified files", location.local);
+                    println!("{} has modified files ", location.local);
                     Ok(())
                 },
                 // Don't need to show anything
