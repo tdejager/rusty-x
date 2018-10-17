@@ -55,7 +55,7 @@ fn display_snippet(full_path: &path::Path) {
     let mut line = String::new();
     while highlighter.reader.read_line(&mut line).unwrap() > 0 {
         {
-            let regions: Vec<(Style, &str)> = highlighter.highlight_lines.highlight(&line);
+            let regions: Vec<(Style, &str)> = highlighter.highlight_lines.highlight(&line, &ss);
             print!("{}", as_24_bit_terminal_escaped(&regions[..], true));
         }
 
