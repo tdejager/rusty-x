@@ -8,6 +8,8 @@ extern crate skim;
 extern crate syntect;
 
 extern crate ansi_term;
+use ansi_term::Colour::Yellow;
+use ansi_term::{ANSIString, ANSIStrings};
 
 use std::default::Default;
 use std::io::BufRead;
@@ -66,7 +68,7 @@ fn display_snippet(full_path: &path::Path) {
 
 /// Use skim to show multiple results, where selections is the files to select
 fn show_multiple_results(selections: &Vec<String>) -> Vec<usize> {
-    let options: SkimOptions = SkimOptions::default().height("50%").multi(true);
+    let options: SkimOptions = SkimOptions::default().ansi(true).height("50%").multi(true);
 
     let joined = selections
         .iter()
@@ -128,22 +130,23 @@ fn main() -> Result<(), Error> {
         Ok(snippets) => process_snippets(op_code, &snippets),
     }?;
 
-    use ansi_term::Style;
     // Check if we have unsaved changes if so display
-    for location in &project.locations {
+    for location in project.locations.iter().filter(|l| l.git == Some(true)) {
         // If this is a git location
-        if location.git == Some(true) {
-            match rusty_x::determine_git_modified_status(location) {
-                Ok(rusty_x::GitStatus::Modified) => {
-                    println!("{} has modified files ", location.local);
-                    Ok(())
-                },
-                // Don't need to show anything
-                Ok(_) => { Ok(()) }
-                // Return the error
-                Err(e) => Err(e)
-            }?
-        }
+        match rusty_x::determine_git_modified_status(location) {
+            Ok(rusty_x::GitStatus::Modified) => {
+                let strings: &[ANSIString] = &[
+                    Yellow.bold().paint(&location.local),
+                    Yellow.paint(" has modified files")
+                ];
+                println!("{}", ANSIStrings(strings));
+                Ok(())
+            }
+            // Don't need to show anything
+            Ok(_) => { Ok(()) }
+            // Return the error
+            Err(e) => Err(e)
+        }?
     };
 
     Ok(())
@@ -155,7 +158,8 @@ fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Erro
         .map(|s| {
             s.tags
                 .iter()
-                .fold(String::new(), |s, val| (s + "|" + val).to_owned())
+                .fold(String::new(), |s, val| (s + ", " + &format!("{}", ansi_term::Style::new().bold().paint(val.trim())).to_owned()))
+                .replacen(",", "", 1)
         })
         .collect();
 
@@ -168,6 +172,7 @@ fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Erro
             let snip = &snippets[i];
             let full_path = path::Path::new(&snip.name);
             // If we chose to edit the snippet use the edit command
+            // TODO add x editor command
             if let OpCode::ListSnippets(true) = op_code {
                 edit_snippet("vim", full_path)?;
             } else {
@@ -181,6 +186,7 @@ fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Erro
         let full_path = path::Path::new(&snip.name);
 
         // Same as above
+        // TODO add x editor command
         if let OpCode::ListSnippets(true) = op_code {
             edit_snippet("vim", full_path)?;
         }
