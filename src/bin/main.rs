@@ -30,11 +30,13 @@ use rusty_x::{edit_snippet, start_operation, Error, OpCode, Project, ProjectOper
 const USAGE: &'static str = "\
 Usage: x [--add=<filename>] <keywords>...
        x [--edit] <keywords>...
+       x --sync
 
 Options:
     -h, --help           Show this message
     --add=<filename>     Add a new snippet with given filename and keywords
     -e, --edit           Edit a existing snippet
+    --sync               Sync snippet repo
 \
 ";
 
@@ -43,6 +45,7 @@ struct Args {
     arg_keywords: Vec<String>,
     flag_add: String,
     flag_edit: bool,
+    flag_sync: bool,
 }
 
 /// Display the snippet on the command line
@@ -86,10 +89,13 @@ fn main() -> Result<(), Error> {
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
+    // Get mode of operation
     let (op_code, filename) = if !args.flag_add.is_empty() {
         (OpCode::AddSnippet, args.flag_add)
     } else if args.flag_edit {
         (OpCode::ListSnippets(true), String::new())
+    } else if args.flag_sync {
+        (OpCode::SyncSnippets, String::new())
     } else {
         (OpCode::ListSnippets(false), String::new())
     };

@@ -2,6 +2,7 @@ use error::Error;
 use error::Error::InternalError;
 use project;
 use snippet;
+use git;
 
 use std::process::Command;
 
@@ -141,7 +142,13 @@ pub fn start_operation(
 
         // Sync snippets
         OpCode::SyncSnippets => {
-            println!("Sync all snippets");
+            println!("Syncing snippet locations...");
+            for location in &project.locations{
+                // Only sync if it is a git location
+                if location.git == Some(true) {
+                    git::git_sync(location)?;
+                }
+            }
             Ok(vec![])
         }
     };
