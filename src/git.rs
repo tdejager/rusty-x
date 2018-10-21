@@ -70,8 +70,8 @@ pub fn determine_git_modified_status(location: &SnippetLocation) -> Result<GitSt
     })?
 }
 
-/// Sync git location with upstream repo
-pub fn git_sync(location: &SnippetLocation) -> Result<(), error::Error> {
+/// Sync/pull git location with upstream repo
+pub fn git_pull(location: &SnippetLocation) -> Result<(), error::Error> {
     let output = run_git_command_for(location, &["pull"]);
 
     // Return if success

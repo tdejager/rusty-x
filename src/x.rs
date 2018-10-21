@@ -19,7 +19,7 @@ pub enum OpCode {
     // For listing snippets
     ListSnippets(bool),
     // For syncing snippets with the server
-    SyncSnippets,
+    PullSnippets,
 }
 
 /// Find the snippets associated with the project
@@ -141,12 +141,12 @@ pub fn start_operation(
         }
 
         // Sync snippets
-        OpCode::SyncSnippets => {
-            println!("Syncing snippet locations...");
+        OpCode::PullSnippets => {
+            println!("Pulling snippet locations...");
             for location in &project.locations{
                 // Only sync if it is a git location
                 if location.git == Some(true) {
-                    git::git_sync(location)?;
+                    git::git_pull(location)?;
                 }
             }
             Ok(vec![])
