@@ -82,3 +82,39 @@ pub fn git_pull(location: &SnippetLocation) -> Result<(), error::Error> {
     }
 }
 
+/// Git push from snippet location
+pub fn git_push(location: &SnippetLocation) -> Result<(), error::Error> {
+    let output = run_git_command_for(location, &["push"]);
+
+    // Return if success
+    if output?.status.success() {
+        Ok(())
+    } else {
+        Err(error::Error::InternalError("Failed to execute push command".to_string()))
+    }
+}
+
+/// Git add from snippet location
+pub fn git_add(location: &SnippetLocation) -> Result<(), error::Error> {
+    let output = run_git_command_for(location, &["add", "-A"]);
+
+    // Return if success
+    if output?.status.success() {
+        Ok(())
+    } else {
+        Err(error::Error::InternalError("Failed to execute `add -A` command".to_string()))
+    }
+}
+
+/// Git commit from snippet location
+pub fn git_commit(location: &SnippetLocation, msg: String) -> Result<(), error::Error> {
+    let output = run_git_command_for(location, &["commit", "-am", &format!("\"{}\"", msg)]);
+
+    // Return if success
+    if output?.status.success() {
+        Ok(())
+    } else {
+        Err(error::Error::InternalError("Failed to execute `commit -a` command".to_string()))
+    }
+}
+

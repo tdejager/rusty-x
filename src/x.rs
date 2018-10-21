@@ -11,6 +11,7 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path;
+use std::io;
 
 #[derive(Debug)]
 pub enum OpCode {
@@ -20,6 +21,8 @@ pub enum OpCode {
     ListSnippets(bool),
     // For syncing snippets with the server
     PullSnippets,
+    // Save snippets to repo
+    SaveSnippets,
 }
 
 /// Find the snippets associated with the project
@@ -71,14 +74,14 @@ pub fn load_snippets(
         // If tag is in the snippet, or no tags are given
         if keyword_slice.len() == 0
             || tags
-                .iter()
-                .fold(false, |res, tag| (res || keyword_slice.contains(&tag)))
-        {
-            result.push(snippet::Snippet::new(
-                filename.to_str().unwrap().to_string(),
-                &tags,
-            ));
-        }
+            .iter()
+            .fold(false, |res, tag| (res || keyword_slice.contains(&tag)))
+            {
+                result.push(snippet::Snippet::new(
+                    filename.to_str().unwrap().to_string(),
+                    &tags,
+                ));
+            }
     }
     Ok(result)
 }
@@ -143,11 +146,36 @@ pub fn start_operation(
         // Sync snippets
         OpCode::PullSnippets => {
             println!("Pulling snippet locations...");
-            for location in &project.locations{
+            for location in &project.locations {
                 // Only sync if it is a git location
                 if location.git == Some(true) {
                     git::git_pull(location)?;
                 }
+            }
+            Ok(vec![])
+        }
+
+        // Sync snippets
+        OpCode::SaveSnippets => {
+            println!("Saving snippets...");
+            for location in &project.locations {
+                // Only sync if it is a git location
+                if location.git == Some(true) {
+                    git::determine_git_modified_status(location).and_then(|s| {
+                        if let git::GitStatus::Modified = s {
+                            println!("Enter your commit message: ");
+                            let mut msg = String::new();
+                            io::stdin().read_line(&mut msg)?;
+                            // Add
+                            git::git_add(location)?;
+                            // Commit
+                            git::git_commit(location, msg)?;
+                            // Push
+                            git::git_push(location)?;
+                            Ok(())
+                        } else { Ok(()) }
+                    })?;
+                };
             }
             Ok(vec![])
         }

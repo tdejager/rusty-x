@@ -31,12 +31,14 @@ const USAGE: &'static str = "\
 Usage: x [--add=<filename>] <keywords>...
        x [--edit] <keywords>...
        x --pull
+       x --save
 
 Options:
     -h, --help           Show this message
     --add=<filename>     Add a new snippet with given filename and keywords
     -e, --edit           Edit a existing snippet
     --pull               Sync snippet repo (git pull)
+    --save               Save snippet repo (git add, git commit, git push)
 \
 ";
 
@@ -46,6 +48,7 @@ struct Args {
     flag_add: String,
     flag_edit: bool,
     flag_pull: bool,
+    flag_save: bool,
 }
 
 /// Display the snippet on the command line
@@ -96,6 +99,8 @@ fn main() -> Result<(), Error> {
         (OpCode::ListSnippets(true), String::new())
     } else if args.flag_pull {
         (OpCode::PullSnippets, String::new())
+    } else if args.flag_save {
+        (OpCode::SaveSnippets, String::new())
     } else {
         (OpCode::ListSnippets(false), String::new())
     };
