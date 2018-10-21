@@ -173,7 +173,12 @@ pub fn start_operation(
                             // Push
                             git::git_push(location)?;
                             Ok(())
-                        } else { Ok(()) }
+                        } else {
+                            // Push to make sure for unpushed changes, TODO change this later to use rev-parse
+                            git::git_push(location)?;
+
+                            Ok(())
+                        }
                     })?;
                 };
             }
