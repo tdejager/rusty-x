@@ -6,7 +6,7 @@ Rusty-x
 A simple snippet manager to find your snippets with colorized terminal output. 
 
 *Warning currently only works on posix platforms.*
-*Warning only supports vim as current editor*
+*Uses $EDITOR env var to select your editor*
 
 Configuration
 =============
