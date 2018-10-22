@@ -37,11 +37,15 @@ Usage
 ```
 Usage: x [--add=<filename>] <keywords>...
        x [--edit] <keywords>...
+       x --pull
+       x --save
 
 Options:
     -h, --help           Show this message
     --add=<filename>     Add a new snippet with given filename and keywords
     -e, --edit           Edit a existing snippet
+    --pull               Sync snippet repo (git pull)
+    --save               Save snippet repo (git add, git commit, git push)
 
 ```
 
@@ -60,6 +64,17 @@ To edit a snippt with a given keywords:
 ```bash
 cargo run --edit <KEYWORDS>
 ```
+
+To sync and pull snippets from your snippet repo's:
+```bash
+cargo run -- --pull
+```
+
+To save snippets to your repositories:
+```bash
+cargo run -- --save
+```
+The command above aks for a commit message in case this is needed, and always tries to do a push for now.
 
 Installed
 =========
