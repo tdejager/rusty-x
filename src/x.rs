@@ -14,9 +14,9 @@ use std::path;
 use std::io;
 
 #[derive(Debug)]
-pub enum OpCode {
+pub enum OpCode<'a> {
     // For the add snippet command
-    AddSnippet(String),
+    AddSnippet(String, &'a project::SnippetLocation),
     // For listing snippets
     ListSnippets(bool),
     // For syncing snippets with the server
@@ -111,9 +111,9 @@ pub fn start_operation(
 ) -> Result<Vec<snippet::Snippet>, Error> {
     // Match on operation
     let result = match code {
-        OpCode::AddSnippet(new_file) => {
+        OpCode::AddSnippet(new_file, location) => {
             // Create the full path
-            let full_path = path::Path::new(&project.locations[0].local).join(new_file);
+            let full_path = path::Path::new(&location.local).join(new_file);
             // Create the file
             if full_path.exists() {
                 return Err(InternalError("Snippet already exists".to_string()));

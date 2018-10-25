@@ -119,7 +119,15 @@ fn main() -> Result<(), Error> {
 
     // Get mode of operation
     let op_code = if !args.flag_add.is_empty() {
-        (OpCode::AddSnippet(args.flag_add))
+        // Convert to strings
+        let results = project.locations.iter().map(|l| { l.local.clone() }).collect();
+        // Only use the fist choice
+        let choice = show_multiple_results(&results);
+        // Return if no choice has been made
+        if choice.len() == 0 {
+            return Ok(());
+        }
+        (OpCode::AddSnippet(args.flag_add, &project.locations[choice[0]]))
     } else if args.flag_edit {
         (OpCode::ListSnippets(true))
     } else if args.flag_pull {
