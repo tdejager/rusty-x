@@ -8,6 +8,7 @@ extern crate skim;
 extern crate syntect;
 
 extern crate ansi_term;
+
 use ansi_term::Colour::Yellow;
 use ansi_term::{ANSIString, ANSIStrings};
 
@@ -92,19 +93,6 @@ fn main() -> Result<(), Error> {
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
-    // Get mode of operation
-    let (op_code, filename) = if !args.flag_add.is_empty() {
-        (OpCode::AddSnippet, args.flag_add)
-    } else if args.flag_edit {
-        (OpCode::ListSnippets(true), String::new())
-    } else if args.flag_pull {
-        (OpCode::PullSnippets, String::new())
-    } else if args.flag_save {
-        (OpCode::SaveSnippets, String::new())
-    } else {
-        (OpCode::ListSnippets(false), String::new())
-    };
-
     // Try to get the project file
     let project_operation = Project::default_project()?;
 
@@ -129,19 +117,35 @@ fn main() -> Result<(), Error> {
         location.create_if_not_exists()?;
     }
 
+    // Get mode of operation
+    let op_code = if !args.flag_add.is_empty() {
+        (OpCode::AddSnippet(args.flag_add))
+    } else if args.flag_edit {
+        (OpCode::ListSnippets(true))
+    } else if args.flag_pull {
+        (OpCode::PullSnippets)
+    } else if args.flag_save {
+        (OpCode::SaveSnippets)
+    } else {
+        (OpCode::ListSnippets(false))
+    };
+
+
     // Pass keywords or options
     let keywords: Vec<String> = args.arg_keywords;
-    let res = start_operation(&op_code, &project, keywords, &filename);
 
-    match res {
-        Err(err) => {
-            // Return error in case of an error
-            Err(err)
-        }
-        Ok(snippets) => process_snippets(op_code, &snippets),
-    }?;
+    // Start processing with given arguments
+    start_operation(&op_code, &project, keywords)
+        .and_then(|snippets| { process_snippets(op_code, &snippets) })?;
 
-    // Check if we have unsaved changes if so display
+    check_modified_files(&project)?;
+
+    Ok(())
+}
+
+
+/// Check if we have unsaved changes if so display
+fn check_modified_files(project: &Project) -> Result<(), Error> {
     for location in project.locations.iter().filter(|l| l.git == Some(true)) {
         // If this is a git location
         match rusty_x::determine_git_modified_status(location) {
@@ -197,10 +201,10 @@ fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Erro
         let full_path = path::Path::new(&snip.name);
 
         // Same as above
-        // TODO add x editor command
         if let OpCode::ListSnippets(true) = op_code {
             edit_snippet("vim", full_path)?;
         }
+
         // Display otherwise
         display_snippet(&full_path);
     }
