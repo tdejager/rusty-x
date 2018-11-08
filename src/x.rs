@@ -15,6 +15,8 @@ use std::io;
 
 #[derive(Debug)]
 pub enum OpCode<'a> {
+    // For the new snippet command
+    NewSnippet(&'a project::SnippetLocation),
     // For the add snippet command
     AddSnippet(String, &'a project::SnippetLocation),
     // For listing snippets
@@ -88,19 +90,35 @@ pub fn load_snippets(
 
 //// Edit snippets
 pub fn edit_snippet(program: &str, full_path: &path::Path) -> Result<(), Error> {
-    let final_editor: String;
-    if let Ok(editor) = env::var("EDITOR") {
-        final_editor = editor.into();
-    } else {
-        final_editor = program.into()
-    };
-
+    let final_editor = default_editor(program);
     let _output = Command::new(final_editor)
         .arg(&full_path)
         .spawn()?
         .wait_with_output()?;
 
     Ok(())
+}
+
+/// New snippet
+pub fn new_snippet(program: &str, working_dir: &path::Path) -> Result<(), Error> {
+    let final_editor = default_editor(program);
+
+    let _output = Command::new(final_editor)
+        .current_dir(&working_dir)
+        .spawn()?
+        .wait_with_output()?;
+
+    Ok(())
+}
+
+fn default_editor(program: &str) -> String {
+    let final_editor: String;
+    if let Ok(editor) = env::var("EDITOR") {
+        final_editor = editor.into();
+    } else {
+        final_editor = program.into()
+    };
+    final_editor
 }
 
 //// Start the different operation modes
@@ -132,6 +150,14 @@ pub fn start_operation(
             let snippet =
                 snippet::Snippet::new(full_path.into_os_string().into_string().unwrap(), &keywords);
             Ok(vec![snippet])
+        }
+
+        // Add a new snippet
+        OpCode::NewSnippet(location) => {
+            let path = path::Path::new(&location.local);
+
+            new_snippet("vim", path)?;
+            Ok(vec![])
         }
 
         // List snippets
