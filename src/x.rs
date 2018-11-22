@@ -63,28 +63,28 @@ pub fn load_snippets(
     dir_entries: &Vec<fs::DirEntry>,
     keywords: &Vec<String>,
 ) -> Result<Vec<snippet::Snippet>, Error> {
-    let mut result: Vec<snippet::Snippet> = Vec::new();
     let keyword_slice = keywords.as_slice();
 
-    // Return snippets
+    // Get all tags for entries
+    let mut tag_with_entries : Vec<(&fs::DirEntry, Vec<String>)> = Vec::new();
     for entry in dir_entries {
-        // Read the file name
-        let filename = entry.path();
-        // Read the tags
-        let tags = snippet::read_tags(entry.path().to_str().unwrap())?;
+        tag_with_entries.push((entry, snippet::read_tags(entry.path().to_str().unwrap())?));
+    };
 
-        // If tag is in the snippet, or no tags are given
-        if keyword_slice.len() == 0
-            || tags
-            .iter()
-            .fold(false, |res, tag| (res || keyword_slice.contains(&tag)))
-            {
-                result.push(snippet::Snippet::new(
-                    filename.to_str().unwrap().to_string(),
-                    &tags,
-                ));
+    // Filter which don't contain the keyword
+    let result = tag_with_entries.iter().filter(|(_, value)| {
+        for keyword in keyword_slice {
+            if value.contains(keyword) {
+                return true
             }
-    }
+        }
+        return false
+    }).map(|(entry, tags)| {
+        snippet::Snippet::new(
+                    entry.path().to_str().unwrap().to_string(),
+                    &tags)
+    }).collect();
+
     Ok(result)
 }
 
