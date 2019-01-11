@@ -15,6 +15,8 @@ use std::io;
 
 #[derive(Debug)]
 pub enum OpCode<'a> {
+    // For the new snippet command
+    NewSnippet(&'a project::SnippetLocation),
     // For the add snippet command
     AddSnippet(String, &'a project::SnippetLocation),
     // For listing snippets
@@ -61,13 +63,11 @@ pub fn load_snippets(
     dir_entries: &Vec<fs::DirEntry>,
     keywords: &Vec<String>,
 ) -> Result<Vec<snippet::Snippet>, Error> {
-    let mut result: Vec<snippet::Snippet> = Vec::new();
     let keyword_slice = keywords.as_slice();
 
-    // Return snippets
+    // Get all tags for entries
+    let mut tag_with_entries : Vec<(&fs::DirEntry, Vec<String>)> = Vec::new();
     for entry in dir_entries {
-        // Read the file name
-        let filename = entry.path();
         // Read the tags
         let tags = snippet::read_tags(entry.path().to_str().unwrap())?;
 
@@ -76,30 +76,58 @@ pub fn load_snippets(
             .iter()
             .any(|tag| keyword_slice.contains(&tag))
         {
-            result.push(snippet::Snippet::new(
-                filename.to_str().unwrap().to_string(),
-                &tags,
-            ));
+            tag_with_entries.push((entry, snippet::read_tags(entry.path().to_str().unwrap())?));
         }
     }
+
+    // Filter which don't contain the keyword
+    let result = tag_with_entries.iter().filter(|(_, value)| {
+        for keyword in keyword_slice {
+            if value.contains(keyword) {
+                return true
+            }
+        }
+        return false
+    }).map(|(entry, tags)| {
+        snippet::Snippet::new(
+                    entry.path().to_str().unwrap().to_string(),
+                    &tags)
+    }).collect();
+
     Ok(result)
 }
 
 //// Edit snippets
 pub fn edit_snippet(program: &str, full_path: &path::Path) -> Result<(), Error> {
-    let final_editor: String;
-    if let Ok(editor) = env::var("EDITOR") {
-        final_editor = editor.into();
-    } else {
-        final_editor = program.into()
-    };
-
+    let final_editor = default_editor(program);
     let _output = Command::new(final_editor)
         .arg(&full_path)
         .spawn()?
         .wait_with_output()?;
 
     Ok(())
+}
+
+/// New snippet
+pub fn new_snippet(program: &str, working_dir: &path::Path) -> Result<(), Error> {
+    let final_editor = default_editor(program);
+
+    let _output = Command::new(final_editor)
+        .current_dir(&working_dir)
+        .spawn()?
+        .wait_with_output()?;
+
+    Ok(())
+}
+
+fn default_editor(program: &str) -> String {
+    let final_editor: String;
+    if let Ok(editor) = env::var("EDITOR") {
+        final_editor = editor.into();
+    } else {
+        final_editor = program.into()
+    };
+    final_editor
 }
 
 //// Start the different operation modes
@@ -131,6 +159,14 @@ pub fn start_operation(
             let snippet =
                 snippet::Snippet::new(full_path.into_os_string().into_string().unwrap(), &keywords);
             Ok(vec![snippet])
+        }
+
+        // Add a new snippet
+        OpCode::NewSnippet(location) => {
+            let path = path::Path::new(&location.local);
+
+            new_snippet("vim", path)?;
+            Ok(vec![])
         }
 
         // List snippets

@@ -29,14 +29,20 @@ use rusty_x::Snippet;
 use rusty_x::{edit_snippet, start_operation, Error, OpCode, Project, ProjectOperation};
 
 const USAGE: &'static str = "\
+<<<<<<< HEAD
 Usage: x
        x [--add=<filename>] <keywords>...
+=======
+Usage: x [--add=<filename>] <keywords>...
+       x --new
+>>>>>>> 05622e3a57b8d0eb727bbcbadfacbce9172d624e
        x [--edit] <keywords>...
        x --pull
        x --save
 
 Options:
     -h, --help           Show this message
+    --new                Add a new snippet without a given name and you need to fill in the keywords
     --add=<filename>     Add a new snippet with given filename and keywords
     -e, --edit           Edit a existing snippet
     --all                Show all snippets
@@ -49,6 +55,7 @@ Options:
 struct Args {
     arg_keywords: Vec<String>,
     flag_add: String,
+    flag_new: bool,
     flag_edit: bool,
     flag_pull: bool,
     flag_save: bool,
@@ -120,7 +127,7 @@ fn main() -> Result<(), Error> {
     }
 
     // Get mode of operation
-    let op_code = if !args.flag_add.is_empty() {
+    let op_code = if !args.flag_add.is_empty() || args.flag_new {
         // Convert to strings
         let results = project.locations.iter().map(|l| { l.local.clone() }).collect();
         // Only use the fist choice
@@ -129,7 +136,11 @@ fn main() -> Result<(), Error> {
         if choice.len() == 0 {
             return Ok(());
         }
-        (OpCode::AddSnippet(args.flag_add, &project.locations[choice[0]]))
+        if !args.flag_add.is_empty() {
+            (OpCode::AddSnippet(args.flag_add, &project.locations[choice[0]]))
+        } else {
+            (OpCode::NewSnippet(&project.locations[choice[0]]))
+        }
     } else if args.flag_edit {
         (OpCode::ListSnippets(true))
     } else if args.flag_pull {
