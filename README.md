@@ -29,13 +29,12 @@ local = "/home/tdejager/.snippets-sjoerd"
 ext = "md"
 ```
 
-
-
 Usage
 =====
 
 ```
-Usage: x [--add=<filename>] <keywords>...
+Usage: x
+       x [--add=<filename>] <keywords>...
        x --new
        x [--edit] <keywords>...
        x --pull
@@ -50,7 +49,13 @@ Options:
     --save               Save snippet repo (git add, git commit, git push)
 ```
 
-To find files:
+To list all snippets:
+
+```bash
+cargo run
+```
+
+To find specific files according to tags:
 
 ```bash
 cargo run <KEYWORDS>
