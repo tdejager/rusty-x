@@ -72,16 +72,15 @@ pub fn load_snippets(
         let tags = snippet::read_tags(entry.path().to_str().unwrap())?;
 
         // If tag is in the snippet, or no tags are given
-        if keyword_slice.len() == 0
-            || tags
+        if keyword_slice.len() == 0 || tags
             .iter()
-            .fold(false, |res, tag| (res || keyword_slice.contains(&tag)))
-            {
-                result.push(snippet::Snippet::new(
-                    filename.to_str().unwrap().to_string(),
-                    &tags,
-                ));
-            }
+            .any(|tag| keyword_slice.contains(&tag))
+        {
+            result.push(snippet::Snippet::new(
+                filename.to_str().unwrap().to_string(),
+                &tags,
+            ));
+        }
     }
     Ok(result)
 }
@@ -141,7 +140,7 @@ pub fn start_operation(
 
             Ok(snippets)
         }
-
+        
         // Sync snippets
         OpCode::PullSnippets => {
             println!("Pulling snippet locations...");

@@ -30,7 +30,7 @@ pub fn read_tags(path: &str) -> Result<Vec<String>, error::Error> {
     file.read_line(&mut buffer)?;
 
     // Read the tags, remove empty ones
-    let mut t: Vec<&str> = buffer.as_str().trim().split(',').collect();
+    let mut t: Vec<&str> = buffer.as_str().split(',').map(|s| s.trim()).collect();
     t.retain(|s| !s.is_empty());
 
     let tags: Vec<String> = t.iter().map(|s| String::from(s.to_owned())).collect();
