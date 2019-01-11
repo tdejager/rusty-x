@@ -81,14 +81,7 @@ pub fn load_snippets(
     }
 
     // Filter which don't contain the keyword
-    let result = tag_with_entries.iter().filter(|(_, value)| {
-        for keyword in keyword_slice {
-            if value.contains(keyword) {
-                return true
-            }
-        }
-        return false
-    }).map(|(entry, tags)| {
+    let result = tag_with_entries.iter().map(|(entry, tags)| {
         snippet::Snippet::new(
                     entry.path().to_str().unwrap().to_string(),
                     &tags)

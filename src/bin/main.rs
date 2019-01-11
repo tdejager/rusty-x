@@ -29,13 +29,9 @@ use rusty_x::Snippet;
 use rusty_x::{edit_snippet, start_operation, Error, OpCode, Project, ProjectOperation};
 
 const USAGE: &'static str = "\
-<<<<<<< HEAD
 Usage: x
        x [--add=<filename>] <keywords>...
-=======
-Usage: x [--add=<filename>] <keywords>...
        x --new
->>>>>>> 05622e3a57b8d0eb727bbcbadfacbce9172d624e
        x [--edit] <keywords>...
        x --pull
        x --save
@@ -45,7 +41,6 @@ Options:
     --new                Add a new snippet without a given name and you need to fill in the keywords
     --add=<filename>     Add a new snippet with given filename and keywords
     -e, --edit           Edit a existing snippet
-    --all                Show all snippets
     --pull               Sync snippet repo (git pull)
     --save               Save snippet repo (git add, git commit, git push)
 \
