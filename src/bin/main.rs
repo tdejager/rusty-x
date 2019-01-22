@@ -5,7 +5,6 @@ extern crate docopt;
 extern crate dirs;
 extern crate rusty_x;
 extern crate skim;
-extern crate syntect;
 
 extern crate ansi_term;
 
@@ -20,10 +19,6 @@ use std::path;
 use docopt::Docopt;
 
 use skim::{Skim, SkimOptions};
-use syntect::easy::HighlightFile;
-use syntect::highlighting::{Style, ThemeSet};
-use syntect::parsing::SyntaxSet;
-use syntect::util::as_24_bit_terminal_escaped;
 
 use rusty_x::Snippet;
 use rusty_x::{edit_snippet, start_operation, Error, OpCode, Project, ProjectOperation};
@@ -58,23 +53,13 @@ struct Args {
 
 /// Display the snippet on the command line
 fn display_snippet(full_path: &path::Path) {
-    let ss = SyntaxSet::load_defaults_newlines();
-    let ts = ThemeSet::load_defaults();
-    let theme = ts.themes.get("base16-eighties.dark");
+    let printer = prettyprint::PrettyPrinter::default()
+        .language("markdown")
+        .header(false)
+        .line_numbers(false)
+        .build().unwrap();
 
-    let mut highlighter = HighlightFile::new(full_path, &ss, theme.unwrap()).unwrap();
-    let mut line = String::new();
-    while highlighter.reader.read_line(&mut line).unwrap() > 0 {
-        {
-            let regions: Vec<(Style, &str)> = highlighter.highlight_lines.highlight(&line, &ss);
-            print!("{}", as_24_bit_terminal_escaped(&regions[..], true));
-        }
-
-        line.clear();
-    }
-
-    // Clear the formatting
-    println!("\x1b[0m");
+    printer.file(full_path.as_os_str().to_str().unwrap()).unwrap();
 }
 
 /// Use skim to show multiple results, where selections is the files to select
