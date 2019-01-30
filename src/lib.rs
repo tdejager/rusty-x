@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate serde_derive;
 
+extern crate rayon;
+
 mod x;
 pub use x::{edit_snippet, start_operation, OpCode};
 

@@ -13,6 +13,8 @@ use std::io::Write;
 use std::path;
 use std::io;
 
+use rayon::prelude::*;
+
 #[derive(Debug)]
 pub enum OpCode<'a> {
     // For the new snippet command
@@ -35,11 +37,11 @@ pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, Er
     // Read the entries in the folder
     for snippet_location in project.locations.iter() {
         println!("Finding snippets in {},", &snippet_location.local.as_str());
-        let entries = fs::read_dir(&snippet_location.local)?;
+        let mut entries : Vec<fs::DirEntry> = fs::read_dir(&snippet_location.local)?.filter_map(|x| x.ok()).collect();
 
         // For each of the entries
-        for e in entries {
-            let dir_ent = e?;
+        let mut entries : Vec<_> = entries.into_par_iter().filter_map(|e| {
+            let dir_ent = e;
 
             // Get the path
             let path = dir_ent.path();
@@ -49,11 +51,13 @@ pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, Er
                 if let Some(s) = ext.to_str() {
                     // Add to list if files match extension
                     if s == snippet_location.ext {
-                        res.push(dir_ent);
+                        return Some(dir_ent);
                     }
                 }
             }
-        }
+            return None;
+        } ).collect();
+        res.append(&mut entries);
     }
     Ok(res)
 }
@@ -73,7 +77,7 @@ pub fn load_snippets(
 
         // If tag is in the snippet, or no tags are given
         if keyword_slice.len() == 0 || tags
-            .iter()
+            .par_iter()
             .any(|tag| keyword_slice.contains(&tag))
         {
             tag_with_entries.push((entry, snippet::read_tags(entry.path().to_str().unwrap())?));
