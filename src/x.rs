@@ -75,21 +75,27 @@ pub fn load_snippets(
     let keyword_slice = keywords.as_slice();
 
     // Get all tags for entries
-    let mut tag_with_entries: Vec<(&fs::DirEntry, Vec<String>)> = Vec::new();
+    let mut tag_with_entries: Vec<(u32, &fs::DirEntry, Vec<String>)> = Vec::new();
     for entry in dir_entries {
         // Read the tags
         let tags = snippet::read_tags(entry.path().to_str().unwrap())?;
 
         // If tag is in the snippet, or no tags are given
-        if keyword_slice.len() == 0 || tags.par_iter().any(|tag| keyword_slice.contains(&tag)) {
-            tag_with_entries.push((entry, snippet::read_tags(entry.path().to_str().unwrap())?));
+        // Filter which don't contain the keyword
+        let tag_count : u32 = tags.iter()
+            .fold(0, |x, tag| x + if keyword_slice.contains(tag) { 1 } else { 0 });
+        if keyword_slice.is_empty() || tag_count > 0 {
+            tag_with_entries.push((tag_count, entry, snippet::read_tags(entry.path().to_str().unwrap())?));
         }
     }
 
-    // Filter which don't contain the keyword
+    // Sort by number of matched tags
+    tag_with_entries.sort_by(|a, b| b.0.cmp(&a.0) );
+
+    // This maps the files and tags, to a snippet
     let result = tag_with_entries
         .iter()
-        .map(|(entry, tags)| {
+        .map(|(count, entry, tags)| {
             snippet::Snippet::new(entry.path().to_str().unwrap().to_string(), &tags)
         })
         .collect();
