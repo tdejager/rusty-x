@@ -1,6 +1,6 @@
 [package]
 name = "rusty-x"
-version = "0.1.72"
+version = "0.1.73"
 authors = ["Tim de Jager <tdejager89@gmail.com>"]
 include = ["src/*.rs", "src/bin/*.rs", "Cargo.toml"]
 readme = "README.md"

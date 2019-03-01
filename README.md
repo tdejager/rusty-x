@@ -120,3 +120,4 @@ ext = "md"
 ## Changelog
 
 0.72: Added pprint library for printing
+0.73: Sort snippets by number of tags that were matched
