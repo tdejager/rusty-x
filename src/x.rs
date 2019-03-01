@@ -13,8 +13,6 @@ use std::io;
 use std::io::Write;
 use std::path;
 
-use rayon::prelude::*;
-
 #[derive(Debug)]
 pub enum OpCode<'a> {
     // For the new snippet command
@@ -43,7 +41,7 @@ pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, Er
 
         // For each of the entries
         let mut entries: Vec<_> = entries
-            .into_par_iter()
+            .into_iter()
             .filter_map(|e| {
                 let dir_ent = e;
 
