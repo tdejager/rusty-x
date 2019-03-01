@@ -1,17 +1,17 @@
 use error::Error;
 use error::Error::InternalError;
+use git;
 use project;
 use snippet;
-use git;
 
 use std::process::Command;
 
 use std::env;
 use std::fs;
 use std::fs::File;
+use std::io;
 use std::io::Write;
 use std::path;
-use std::io;
 
 use rayon::prelude::*;
 
@@ -37,26 +37,31 @@ pub fn find_snippets(project: &project::Project) -> Result<Vec<fs::DirEntry>, Er
     // Read the entries in the folder
     for snippet_location in project.locations.iter() {
         println!("Finding snippets in {},", &snippet_location.local.as_str());
-        let mut entries : Vec<fs::DirEntry> = fs::read_dir(&snippet_location.local)?.filter_map(|x| x.ok()).collect();
+        let mut entries: Vec<fs::DirEntry> = fs::read_dir(&snippet_location.local)?
+            .filter_map(|x| x.ok())
+            .collect();
 
         // For each of the entries
-        let mut entries : Vec<_> = entries.into_par_iter().filter_map(|e| {
-            let dir_ent = e;
+        let mut entries: Vec<_> = entries
+            .into_par_iter()
+            .filter_map(|e| {
+                let dir_ent = e;
 
-            // Get the path
-            let path = dir_ent.path();
-            // Get the extension
-            let ext_opt = path.extension();
-            if let Some(ext) = ext_opt {
-                if let Some(s) = ext.to_str() {
-                    // Add to list if files match extension
-                    if s == snippet_location.ext {
-                        return Some(dir_ent);
+                // Get the path
+                let path = dir_ent.path();
+                // Get the extension
+                let ext_opt = path.extension();
+                if let Some(ext) = ext_opt {
+                    if let Some(s) = ext.to_str() {
+                        // Add to list if files match extension
+                        if s == snippet_location.ext {
+                            return Some(dir_ent);
+                        }
                     }
                 }
-            }
-            return None;
-        } ).collect();
+                return None;
+            })
+            .collect();
         res.append(&mut entries);
     }
     Ok(res)
@@ -70,26 +75,24 @@ pub fn load_snippets(
     let keyword_slice = keywords.as_slice();
 
     // Get all tags for entries
-    let mut tag_with_entries : Vec<(&fs::DirEntry, Vec<String>)> = Vec::new();
+    let mut tag_with_entries: Vec<(&fs::DirEntry, Vec<String>)> = Vec::new();
     for entry in dir_entries {
         // Read the tags
         let tags = snippet::read_tags(entry.path().to_str().unwrap())?;
 
         // If tag is in the snippet, or no tags are given
-        if keyword_slice.len() == 0 || tags
-            .par_iter()
-            .any(|tag| keyword_slice.contains(&tag))
-        {
+        if keyword_slice.len() == 0 || tags.par_iter().any(|tag| keyword_slice.contains(&tag)) {
             tag_with_entries.push((entry, snippet::read_tags(entry.path().to_str().unwrap())?));
         }
     }
 
     // Filter which don't contain the keyword
-    let result = tag_with_entries.iter().map(|(entry, tags)| {
-        snippet::Snippet::new(
-                    entry.path().to_str().unwrap().to_string(),
-                    &tags)
-    }).collect();
+    let result = tag_with_entries
+        .iter()
+        .map(|(entry, tags)| {
+            snippet::Snippet::new(entry.path().to_str().unwrap().to_string(), &tags)
+        })
+        .collect();
 
     Ok(result)
 }
@@ -173,7 +176,7 @@ pub fn start_operation(
 
             Ok(snippets)
         }
-        
+
         // Sync snippets
         OpCode::PullSnippets => {
             println!("Pulling snippet locations...");

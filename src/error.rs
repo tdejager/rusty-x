@@ -44,7 +44,9 @@ impl From<toml::ser::Error> for Error {
 }
 
 impl From<FromUtf8Error> for Error {
-    fn from(err: FromUtf8Error) -> Error { Error::InternalError(err.to_string()) }
+    fn from(err: FromUtf8Error) -> Error {
+        Error::InternalError(err.to_string())
+    }
 }
 
 impl From<toml::de::Error> for Error {

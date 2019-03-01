@@ -1,14 +1,15 @@
 use error;
 use project::{Project, SnippetLocation};
-use std::process::{Command, Stdio};
-use std::process::Output;
-use std::io::Error;
 use std::ffi::OsStr;
-
+use std::io::Error;
+use std::process::Output;
+use std::process::{Command, Stdio};
 
 /// Runt git command for this snippet location
 fn run_git_command_for<I, S>(location: &SnippetLocation, commands: I) -> Result<Output, Error>
-    where I: IntoIterator<Item=S>, S: AsRef<OsStr>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
 {
     Command::new("git")
         .stdout(Stdio::piped())
@@ -57,7 +58,9 @@ pub enum GitStatus {
 }
 
 /// Determine the git file status for the snippet location
-pub fn determine_git_modified_status(location: &SnippetLocation) -> Result<GitStatus, error::Error> {
+pub fn determine_git_modified_status(
+    location: &SnippetLocation,
+) -> Result<GitStatus, error::Error> {
     let output = run_git_command_for(location, &["status", "--porcelain"]);
     let output_str_result = String::from_utf8(output?.stdout);
 
@@ -78,7 +81,9 @@ pub fn git_pull(location: &SnippetLocation) -> Result<(), error::Error> {
     if output?.status.success() {
         Ok(())
     } else {
-        Err(error::Error::InternalError("Failed to execute pull command".to_string()))
+        Err(error::Error::InternalError(
+            "Failed to execute pull command".to_string(),
+        ))
     }
 }
 
@@ -90,7 +95,9 @@ pub fn git_push(location: &SnippetLocation) -> Result<(), error::Error> {
     if output?.status.success() {
         Ok(())
     } else {
-        Err(error::Error::InternalError("Failed to execute push command".to_string()))
+        Err(error::Error::InternalError(
+            "Failed to execute push command".to_string(),
+        ))
     }
 }
 
@@ -102,7 +109,9 @@ pub fn git_add(location: &SnippetLocation) -> Result<(), error::Error> {
     if output?.status.success() {
         Ok(())
     } else {
-        Err(error::Error::InternalError("Failed to execute `add -A` command".to_string()))
+        Err(error::Error::InternalError(
+            "Failed to execute `add -A` command".to_string(),
+        ))
     }
 }
 
@@ -114,7 +123,8 @@ pub fn git_commit(location: &SnippetLocation, msg: String) -> Result<(), error::
     if output?.status.success() {
         Ok(())
     } else {
-        Err(error::Error::InternalError("Failed to execute `commit -a` command".to_string()))
+        Err(error::Error::InternalError(
+            "Failed to execute `commit -a` command".to_string(),
+        ))
     }
 }
-

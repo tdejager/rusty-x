@@ -8,7 +8,6 @@ extern crate skim;
 
 extern crate ansi_term;
 
-
 use ansi_term::Colour::Yellow;
 use ansi_term::{ANSIString, ANSIStrings};
 
@@ -58,9 +57,12 @@ fn display_snippet(full_path: &path::Path) {
         .language("markdown")
         .header(false)
         .line_numbers(false)
-        .build().unwrap();
+        .build()
+        .unwrap();
 
-    printer.file(full_path.as_os_str().to_str().unwrap()).unwrap();
+    printer
+        .file(full_path.as_os_str().to_str().unwrap())
+        .unwrap();
 }
 
 /// Use skim to show multiple results, where selections is the files to select
@@ -110,7 +112,7 @@ fn main() -> Result<(), Error> {
     // Get mode of operation
     let op_code = if !args.flag_add.is_empty() || args.flag_new {
         // Convert to strings
-        let results = project.locations.iter().map(|l| { l.local.clone() }).collect();
+        let results = project.locations.iter().map(|l| l.local.clone()).collect();
         // Only use the fist choice
         let choice = show_multiple_results(&results);
         // Return if no choice has been made
@@ -132,19 +134,17 @@ fn main() -> Result<(), Error> {
         (OpCode::ListSnippets(false))
     };
 
-
     // Pass keywords or options
     let keywords: Vec<String> = args.arg_keywords;
 
     // Start processing with given arguments
     start_operation(&op_code, &project, keywords)
-        .and_then(|snippets| { process_snippets(op_code, &snippets) })?;
+        .and_then(|snippets| process_snippets(op_code, &snippets))?;
 
     check_modified_files(&project)?;
 
     Ok(())
 }
-
 
 /// Check if we have unsaved changes if so display
 fn check_modified_files(project: &Project) -> Result<(), Error> {
@@ -154,17 +154,17 @@ fn check_modified_files(project: &Project) -> Result<(), Error> {
             Ok(rusty_x::GitStatus::Modified) => {
                 let strings: &[ANSIString] = &[
                     Yellow.bold().paint(&location.local),
-                    Yellow.paint(" has modified files")
+                    Yellow.paint(" has modified files"),
                 ];
                 println!("{}", ANSIStrings(strings));
                 Ok(())
             }
             // Don't need to show anything
-            Ok(_) => { Ok(()) }
+            Ok(_) => Ok(()),
             // Return the error
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }?
-    };
+    }
 
     Ok(())
 }
@@ -175,7 +175,11 @@ fn process_snippets(op_code: OpCode, snippets: &Vec<Snippet>) -> Result<(), Erro
         .map(|s| {
             s.tags
                 .iter()
-                .fold(String::new(), |s, val| (s + ", " + &format!("{}", ansi_term::Style::new().bold().paint(val.trim())).to_owned()))
+                .fold(String::new(), |s, val| {
+                    (s + ", "
+                        + &format!("{}", ansi_term::Style::new().bold().paint(val.trim()))
+                            .to_owned())
+                })
                 .replacen(",", "", 1)
         })
         .collect();
