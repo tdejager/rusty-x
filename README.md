@@ -121,3 +121,4 @@ ext = "md"
 
 0.72: Added pprint library for printing
 0.73: Sort snippets by number of tags that were matched
+0.74: Removed rayon as dependency for now
