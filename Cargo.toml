@@ -1,6 +1,6 @@
 [package]
 name = "rusty-x"
-version = "0.1.74"
+version = "0.1.75"
 authors = ["Tim de Jager <tdejager89@gmail.com>"]
 include = ["src/*.rs", "src/bin/*.rs", "Cargo.toml"]
 readme = "README.md"
@@ -18,7 +18,7 @@ toml = "0.4"
 serde_derive = "1.0.66"
 serde = "1.0.66"
 dirs = "1.0.3"
-skim = "0.4.0"
+skim = "0.6.8"
 docopt = "1"
 ansi_term = "0.11.0"
 

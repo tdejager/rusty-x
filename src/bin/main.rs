@@ -12,13 +12,12 @@ use ansi_term::Colour::Yellow;
 use ansi_term::{ANSIString, ANSIStrings};
 
 use std::default::Default;
-use std::io::BufRead;
 use std::io::Cursor;
 use std::path;
 
 use docopt::Docopt;
 
-use skim::{Skim, SkimOptions};
+use skim::{Skim, SkimOptionsBuilder};
 
 use rusty_x::Snippet;
 use rusty_x::{edit_snippet, start_operation, Error, OpCode, Project, ProjectOperation};
@@ -67,7 +66,12 @@ fn display_snippet(full_path: &path::Path) {
 
 /// Use skim to show multiple results, where selections is the files to select
 fn show_multiple_results(selections: &Vec<String>) -> Vec<usize> {
-    let options: SkimOptions = SkimOptions::default().ansi(true).height("50%").multi(true);
+    let options = SkimOptionsBuilder::default()
+        .ansi(true)
+        .height(Some("50%"))
+        .multi(true)
+        .build()
+        .unwrap();
 
     let joined = selections
         .iter()
