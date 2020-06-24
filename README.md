@@ -24,7 +24,7 @@ Install
 =========
 
 1. To install make sure that `cargo` and `rust` are installed
-2. Install with `cargo rusty-x --force`, `--force` is needed when the binary already exists
+2. Install with `cargo install rusty-x --force`, `--force` is needed when the binary already exists
 
 When installed from with cargo install, the commands start with `x`. So that means, e.g.:
 
@@ -120,6 +120,9 @@ ext = "md"
 ## Changelog
 
 0.72: Added pprint library for printing
+
 0.73: Sort snippets by number of tags that were matched
+
 0.74: Removed rayon as dependency for now
+
 0.75: Updated skim dependency
